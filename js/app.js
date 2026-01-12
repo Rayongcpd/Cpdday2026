@@ -944,8 +944,18 @@ function changeSummaryPage(direction) {
     updateSummaryTab();
 }
 
+// ฟังก์ชัน normalize ชื่อสหกรณ์ เพื่อตรวจสอบชื่อที่คล้ายกัน/ซ้ำกัน
+function normalizeCoopName(name) {
+    if (!name) return '';
+    return name
+        .toLowerCase() // แปลงเป็นตัวพิมพ์เล็ก
+        .replace(/\s+/g, '') // ลบช่องว่างทั้งหมด
+        .replace(/[,.\-_()]/g, '') // ลบเครื่องหมายพิเศษ
+        .trim();
+}
+
 function updateSummaryTab() {
-    let totalCoops = 0;
+    // Count Coops only if Paid - ใช้ Set เพื่อนับสหกรณ์ที่ไม่ซ้ำ
     let totalShirts = 0;
     let totalFlowers = 0;
     let totalTables = 0;
@@ -953,11 +963,23 @@ function updateSummaryTab() {
 
     let countXS = 0, countS = 0, countM = 0, countL = 0, countXL = 0, countXXL = 0;
 
-    const colorCounts = { green: 0, blue: 0, purple: 0, pink: 0 };
+    // ใช้ Set เพื่อเก็บชื่อสหกรณ์ที่ไม่ซ้ำ (normalized)
+    const uniqueCoops = new Set();
+    // เก็บชื่อสหกรณ์ที่ไม่ซ้ำสำหรับแต่ละสี
+    const uniqueCoopsByColor = {
+        green: new Set(),
+        blue: new Set(),
+        purple: new Set(),
+        pink: new Set()
+    };
 
     allBookings.forEach(booking => {
         if (booking.payment_status === 'ชำระแล้ว') {
-            totalCoops++;
+            // Normalize ชื่อสหกรณ์เพื่อตรวจสอบการซ้ำ
+            const normalizedName = normalizeCoopName(booking.coop_name);
+
+            // เพิ่มชื่อสหกรณ์ที่ไม่ซ้ำ (Set จะไม่เพิ่มถ้ามีอยู่แล้ว)
+            uniqueCoops.add(normalizedName);
 
             totalShirts += booking.shirt_xs + booking.shirt_s + booking.shirt_m +
                 booking.shirt_l + booking.shirt_xl + booking.shirt_xxl;
@@ -973,11 +995,22 @@ function updateSummaryTab() {
             totalTables += booking.table_count;
             totalRevenue += booking.total_amount;
 
-            if (colorCounts[booking.coop_color] !== undefined) {
-                colorCounts[booking.coop_color]++;
+            // นับสีทีมโดยไม่นับซ้ำ (ดูจากชื่อสหกรณ์ที่ normalized)
+            if (uniqueCoopsByColor[booking.coop_color] !== undefined) {
+                uniqueCoopsByColor[booking.coop_color].add(normalizedName);
             }
         }
     });
+
+    // นับจำนวนสหกรณ์ที่ไม่ซ้ำ
+    const totalCoops = uniqueCoops.size;
+    // นับจำนวนสีทีมที่ไม่ซ้ำ
+    const colorCounts = {
+        green: uniqueCoopsByColor.green.size,
+        blue: uniqueCoopsByColor.blue.size,
+        purple: uniqueCoopsByColor.purple.size,
+        pink: uniqueCoopsByColor.pink.size
+    };
 
     document.getElementById('totalCoops').textContent = totalCoops;
     document.getElementById('totalShirts').textContent = totalShirts;
