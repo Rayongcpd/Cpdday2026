@@ -77,6 +77,16 @@ function showToast(message, type = 'info') {
 }
 
 // ===== Admin Logic =====
+let footerClickCount = 0;
+let footerClickTimer = null;
+
+function handleFooterClick() {
+    footerClickCount++;
+    if (footerClickTimer) clearTimeout(footerClickTimer);
+    footerClickTimer = setTimeout(() => { footerClickCount = 0; }, 1000);
+    if (footerClickCount >= 5) { toggleAdmin(); footerClickCount = 0; }
+}
+
 function toggleAdmin() {
     if (isAdmin) {
         isAdmin = false;
@@ -118,17 +128,13 @@ function checkAdminState() {
 
 function updateAdminUI() {
     const summaryTabBtn = document.getElementById('tab-summary');
-    const adminBtn = document.getElementById('adminToggleBtn');
     if (isAdmin) {
         summaryTabBtn.classList.remove('hidden');
-        adminBtn.textContent = 'Admin: ON';
-        adminBtn.classList.add('bg-green-500');
     } else {
         summaryTabBtn.classList.add('hidden');
-        adminBtn.textContent = 'Admin: Off';
-        adminBtn.classList.remove('bg-green-500');
         if (!document.getElementById('content-summary').classList.contains('hidden')) switchTab('booking');
     }
+
     if (!document.getElementById('content-payment').classList.contains('hidden')) {
         if (!document.getElementById('paymentDetailModal').classList.contains('hidden') && currentPaymentCoop) renderPaymentInfo();
     }
