@@ -113,10 +113,10 @@
                     <!-- Step 3: เสื้อ -->
                     <div class="space-y-3">
                         <label class="block text-lg font-semibold text-gray-700">3. จำนวนเสื้อกีฬา (300 บาท/ตัว)</label>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                             <div>
-                                <label class="block text-sm font-medium mb-1">XS</label>
-                                <input type="number" id="shirtXS" min="0" placeholder="-"
+                                <label class="block text-sm font-medium mb-1">SS</label>
+                                <input type="number" id="shirtSS" min="0" placeholder="-"
                                     class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
                             </div>
                             <div>
@@ -140,8 +140,33 @@
                                     class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-1">XXL</label>
-                                <input type="number" id="shirtXXL" min="0" placeholder="-"
+                                <label class="block text-sm font-medium mb-1">2XL</label>
+                                <input type="number" id="shirt2XL" min="0" placeholder="-"
+                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">3XL</label>
+                                <input type="number" id="shirt3XL" min="0" placeholder="-"
+                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">4XL</label>
+                                <input type="number" id="shirt4XL" min="0" placeholder="-"
+                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">5XL</label>
+                                <input type="number" id="shirt5XL" min="0" placeholder="-"
+                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">6XL</label>
+                                <input type="number" id="shirt6XL" min="0" placeholder="-"
+                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">7XL</label>
+                                <input type="number" id="shirt7XL" min="0" placeholder="-"
                                     class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
                             </div>
                         </div>
@@ -160,6 +185,14 @@
                             บาท/โต๊ะ)</label>
                         <input type="number" id="tableCount" min="0" placeholder="-"
                             class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                    </div>
+
+                    <!-- Step 6: เงินสนับสนุน -->
+                    <div class="space-y-3">
+                        <label class="block text-lg font-semibold text-gray-700">6. เงินสนับสนุน (ไม่บังคับ)</label>
+                        <p class="text-sm text-gray-500">* ยอดเงินสนับสนุนจะถูกรวมเข้ากับยอดค่าใช้จ่ายทั้งหมด</p>
+                        <input type="number" id="sponsorAmount" min="0" placeholder="ระบุจำนวนเงินสนับสนุน (บาท)"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 bg-green-50">
                     </div>
 
                     <!-- Preview Button -->
@@ -271,7 +304,7 @@
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 สรุปข้อมูลทั้งหมด</h2>
 
                     <!-- Summary Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                         <div class="bg-blue-100 rounded-lg p-4 text-center">
                             <p class="text-3xl font-bold text-blue-700" id="totalCoops">0</p>
                             <p class="text-sm text-gray-700 mt-1">สหกรณ์ทั้งหมด</p>
@@ -288,6 +321,10 @@
                             <p class="text-3xl font-bold text-pink-700" id="totalTables">0</p>
                             <p class="text-sm text-gray-700 mt-1">โต๊ะจีนทั้งหมด (โต๊ะ)</p>
                         </div>
+                        <div class="bg-teal-100 rounded-lg p-4 text-center">
+                            <p class="text-3xl font-bold text-teal-700" id="totalSponsor">0</p>
+                            <p class="text-sm text-gray-700 mt-1">เงินสนับสนุน (บาท)</p>
+                        </div>
                         <div class="bg-amber-100 rounded-lg p-4 text-center">
                             <p class="text-3xl font-bold text-amber-700" id="totalRevenue">0</p>
                             <p class="text-sm text-gray-700 mt-1">ยอดเงินรวม (บาท)</p>
@@ -297,30 +334,50 @@
                     <!-- Shirt Size Breakdown -->
                     <div class="mb-6">
                         <h3 class="text-xl font-bold mb-3 text-gray-700">👕 สรุปยอดเสื้อตามไซส์</h3>
-                        <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                        <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-2">
                             <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
-                                <p class="text-sm text-gray-600 font-semibold">ไซส์ XS</p>
-                                <p class="text-xl font-bold text-gray-800" id="totalXS">0</p>
+                                <p class="text-sm text-gray-600 font-semibold">SS</p>
+                                <p class="text-xl font-bold text-gray-800" id="totalSS">0</p>
                             </div>
                             <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
-                                <p class="text-sm text-gray-600 font-semibold">ไซส์ S</p>
+                                <p class="text-sm text-gray-600 font-semibold">S</p>
                                 <p class="text-xl font-bold text-gray-800" id="totalS">0</p>
                             </div>
                             <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
-                                <p class="text-sm text-gray-600 font-semibold">ไซส์ M</p>
+                                <p class="text-sm text-gray-600 font-semibold">M</p>
                                 <p class="text-xl font-bold text-gray-800" id="totalM">0</p>
                             </div>
                             <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
-                                <p class="text-sm text-gray-600 font-semibold">ไซส์ L</p>
+                                <p class="text-sm text-gray-600 font-semibold">L</p>
                                 <p class="text-xl font-bold text-gray-800" id="totalL">0</p>
                             </div>
                             <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
-                                <p class="text-sm text-gray-600 font-semibold">ไซส์ XL</p>
+                                <p class="text-sm text-gray-600 font-semibold">XL</p>
                                 <p class="text-xl font-bold text-gray-800" id="totalXL">0</p>
                             </div>
                             <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
-                                <p class="text-sm text-gray-600 font-semibold">ไซส์ XXL</p>
-                                <p class="text-xl font-bold text-gray-800" id="totalXXL">0</p>
+                                <p class="text-sm text-gray-600 font-semibold">2XL</p>
+                                <p class="text-xl font-bold text-gray-800" id="total2XL">0</p>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
+                                <p class="text-sm text-gray-600 font-semibold">3XL</p>
+                                <p class="text-xl font-bold text-gray-800" id="total3XL">0</p>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
+                                <p class="text-sm text-gray-600 font-semibold">4XL</p>
+                                <p class="text-xl font-bold text-gray-800" id="total4XL">0</p>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
+                                <p class="text-sm text-gray-600 font-semibold">5XL</p>
+                                <p class="text-xl font-bold text-gray-800" id="total5XL">0</p>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
+                                <p class="text-sm text-gray-600 font-semibold">6XL</p>
+                                <p class="text-xl font-bold text-gray-800" id="total6XL">0</p>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
+                                <p class="text-sm text-gray-600 font-semibold">7XL</p>
+                                <p class="text-xl font-bold text-gray-800" id="total7XL">0</p>
                             </div>
                         </div>
 
@@ -362,6 +419,7 @@
                                         <th class="border px-4 py-2 text-center">เสื้อ</th>
                                         <th class="border px-4 py-2 text-center">พานพุ่ม</th>
                                         <th class="border px-4 py-2 text-center">โต๊ะจีน</th>
+                                        <th class="border px-4 py-2 text-center">เงินสนับสนุน</th>
                                         <th class="border px-4 py-2 text-center">ยอดรวม</th>
                                         <th class="border px-4 py-2 text-center">รายละเอียด</th>
                                         <th class="border px-4 py-2 text-center">สถานะ</th>
