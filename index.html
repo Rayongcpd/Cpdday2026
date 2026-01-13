@@ -189,7 +189,7 @@
 
                     <!-- Step 6: เงินสนับสนุน -->
                     <div class="space-y-3">
-                        <label class="block text-lg font-semibold text-gray-700">6. เงินสนับสนุน (ไม่บังคับ)</label>
+                        <label class="block text-lg font-semibold text-gray-700">6. เงินสนับสนุน </label>
                         <p class="text-sm text-gray-500">* ยอดเงินสนับสนุนจะถูกรวมเข้ากับยอดค่าใช้จ่ายทั้งหมด</p>
                         <input type="number" id="sponsorAmount" min="0" placeholder="ระบุจำนวนเงินสนับสนุน (บาท)"
                             class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 bg-green-50">
@@ -627,6 +627,26 @@
                             ❌ ยกเลิกการจอง
                         </button>
                     </div>
+
+                    <!-- Bank Transfer Info -->
+                    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-lg p-4">
+                        <h4 class="font-bold text-lg text-blue-800 mb-3 flex items-center gap-2">
+                            🏦 ช่องทางการโอนเงิน
+                        </h4>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-shrink-0">
+                                <img src="https://krungthai.com/dist/resources/images/about-ktb/logo-krungthai.png"
+                                    alt="Krungthai Bank" class="w-16 h-16 object-contain">
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-600">ธนาคารกรุงไทย</p>
+                                <p class="text-xl font-bold text-blue-700 tracking-wider">218-0-73086-1</p>
+                                <p class="text-sm font-medium text-gray-700">ชื่อบัญชี: วันสหกรณ์แห่งชาติจังหวัดระยอง
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <label class="block text-lg font-semibold text-gray-700">แนบหลักฐานการโอนเงิน</label>
                     <p class="text-sm text-red-500 font-medium">* หากแนบสลิปแล้วจะไม่สามารถ <b>แก้ไขหรือยกเลิก</b>
                         รายการที่ท่านจองได้ โปรดตรวจสอบก่อนทำการโอนเงิน</p>
