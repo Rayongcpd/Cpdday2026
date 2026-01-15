@@ -403,15 +403,16 @@ function prevImage() { if (currentProofUrls.length <= 1) return; currentUrlIndex
 function updateStatusButtons(status) { document.querySelectorAll('.payment-status-btn').forEach(btn => { btn.classList.remove('bg-green-100', 'border-green-500', 'text-green-700', 'bg-yellow-100', 'border-yellow-500', 'text-yellow-700', 'bg-blue-100', 'border-blue-500', 'text-blue-700'); btn.classList.add('border-gray-300', 'text-gray-700'); }); const selectedBtn = document.querySelector(`[data-status="${status}"]`); if (selectedBtn) { if (status === 'ชำระแล้ว') selectedBtn.classList.add('bg-green-100', 'border-green-500', 'text-green-700'); else if (status === 'รอตรวจสอบ') selectedBtn.classList.add('bg-blue-100', 'border-blue-500', 'text-blue-700'); else selectedBtn.classList.add('bg-yellow-100', 'border-yellow-500', 'text-yellow-700'); } }
 function updatePaymentStatus(status) { if (!currentPaymentCoop) return; currentPaymentCoop.payment_status = status; updateStatusButtons(status); }
 
-async function uploadSlip() {
-    const fileInput = document.getElementById('slipInput'); const file = fileInput.files[0];
+async function uploadSlip(inputId = 'slipInput', btnId = 'uploadBtn') {
+    const fileInput = document.getElementById(inputId); const file = fileInput.files[0];
     if (!file) { showToast('กรุณาเลือกไฟล์รูปภาพ', 'error'); return; }
-    const uploadBtn = document.getElementById('uploadBtn'); uploadBtn.disabled = true; uploadBtn.innerHTML = '<div class="spinner mx-auto"></div>';
+    const uploadBtn = document.getElementById(btnId); const originalText = uploadBtn.innerHTML;
+    uploadBtn.disabled = true; uploadBtn.innerHTML = '<div class="spinner mx-auto"></div>';
     const reader = new FileReader();
     reader.onload = async function (e) {
         const base64Data = e.target.result.split(',')[1];
-        try { const result = await ApiClient.uploadSlip(currentPaymentCoop, base64Data, file.type); uploadBtn.disabled = false; uploadBtn.innerHTML = '📤 อัพโหลดหลักฐาน'; if (result.isOk) { showToast('อัพโหลดสำเร็จ! กรุณารอตรวจสอบ', 'success'); fileInput.value = ''; currentPaymentCoop = null; updatePaymentTable(); closePaymentModal(); init(); } else { showToast('เกิดข้อผิดพลาด: ' + result.error, 'error'); } }
-        catch (error) { uploadBtn.disabled = false; uploadBtn.innerHTML = '📤 อัพโหลดหลักฐาน'; showToast('Upload failed: ' + error.message, 'error'); }
+        try { const result = await ApiClient.uploadSlip(currentPaymentCoop, base64Data, file.type); uploadBtn.disabled = false; uploadBtn.innerHTML = originalText; if (result.isOk) { showToast('อัพโหลดสำเร็จ! กรุณารอตรวจสอบ', 'success'); fileInput.value = ''; if (inputId === 'adminSlipInput') { const bookingId = currentPaymentCoop.id; const data = await ApiClient.getBookingData(); const updatedBooking = data.find(b => b.id === bookingId); if (updatedBooking) { currentPaymentCoop = updatedBooking; renderPaymentInfo(); } } else { currentPaymentCoop = null; updatePaymentTable(); closePaymentModal(); init(); } } else { showToast('เกิดข้อผิดพลาด: ' + result.error, 'error'); } }
+        catch (error) { uploadBtn.disabled = false; uploadBtn.innerHTML = originalText; showToast('Upload failed: ' + error.message, 'error'); }
     };
     reader.readAsDataURL(file);
 }
