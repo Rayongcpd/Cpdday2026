@@ -394,24 +394,93 @@
                         </div>
 
                         <div class="mb-6 mt-6">
-                            <h3 class="text-xl font-bold mb-3">สรุปตามสีทีม</h3>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="border-2 border-green-300 rounded-lg p-4 bg-green-50">
-                                    <p class="font-bold text-green-700">🟢 ทีมสีเขียว</p>
-                                    <p id="greenCount" class="text-2xl font-bold">0</p>
-                                </div>
-                                <div class="border-2 border-blue-300 rounded-lg p-4 bg-blue-50">
-                                    <p class="font-bold text-blue-700">🔵 ทีมสีฟ้า</p>
-                                    <p id="blueCount" class="text-2xl font-bold">0</p>
-                                </div>
-                                <div class="border-2 border-purple-300 rounded-lg p-4 bg-purple-50">
-                                    <p class="font-bold text-purple-700">🟣 ทีมสีม่วง</p>
-                                    <p id="purpleCount" class="text-2xl font-bold">0</p>
-                                </div>
-                                <div class="border-2 border-pink-300 rounded-lg p-4 bg-pink-50">
-                                    <p class="font-bold text-pink-700">💗 ทีมสีชมพู</p>
-                                    <p id="pinkCount" class="text-2xl font-bold">0</p>
-                                </div>
+                            <h3 class="text-xl font-bold mb-3">👕 สรุปยอดเสื้อตามสีทีม</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse text-sm">
+                                    <thead>
+                                        <tr class="bg-gray-100">
+                                            <th class="border px-2 py-2 text-left">สีทีม</th>
+                                            <th class="border px-2 py-2 text-center">SS</th>
+                                            <th class="border px-2 py-2 text-center">S</th>
+                                            <th class="border px-2 py-2 text-center">M</th>
+                                            <th class="border px-2 py-2 text-center">L</th>
+                                            <th class="border px-2 py-2 text-center">XL</th>
+                                            <th class="border px-2 py-2 text-center">2XL</th>
+                                            <th class="border px-2 py-2 text-center">3XL</th>
+                                            <th class="border px-2 py-2 text-center">4XL</th>
+                                            <th class="border px-2 py-2 text-center">5XL</th>
+                                            <th class="border px-2 py-2 text-center">6XL</th>
+                                            <th class="border px-2 py-2 text-center">7XL</th>
+                                            <th class="border px-2 py-2 text-center font-bold">รวม</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="bg-green-50">
+                                            <td class="border px-2 py-2 font-bold text-green-700">🟢 สีเขียว</td>
+                                            <td class="border px-2 py-2 text-center" id="greenSS">0</td>
+                                            <td class="border px-2 py-2 text-center" id="greenS">0</td>
+                                            <td class="border px-2 py-2 text-center" id="greenM">0</td>
+                                            <td class="border px-2 py-2 text-center" id="greenL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="greenXL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="green2XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="green3XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="green4XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="green5XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="green6XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="green7XL">0</td>
+                                            <td class="border px-2 py-2 text-center font-bold text-green-700"
+                                                id="greenTotal">0</td>
+                                        </tr>
+                                        <tr class="bg-blue-50">
+                                            <td class="border px-2 py-2 font-bold text-blue-700">🔵 สีฟ้า</td>
+                                            <td class="border px-2 py-2 text-center" id="blueSS">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blueS">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blueM">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blueL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blueXL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blue2XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blue3XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blue4XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blue5XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blue6XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="blue7XL">0</td>
+                                            <td class="border px-2 py-2 text-center font-bold text-blue-700"
+                                                id="blueTotal">0</td>
+                                        </tr>
+                                        <tr class="bg-purple-50">
+                                            <td class="border px-2 py-2 font-bold text-purple-700">🟣 สีม่วง</td>
+                                            <td class="border px-2 py-2 text-center" id="purpleSS">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purpleS">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purpleM">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purpleL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purpleXL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purple2XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purple3XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purple4XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purple5XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purple6XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="purple7XL">0</td>
+                                            <td class="border px-2 py-2 text-center font-bold text-purple-700"
+                                                id="purpleTotal">0</td>
+                                        </tr>
+                                        <tr class="bg-pink-50">
+                                            <td class="border px-2 py-2 font-bold text-pink-700">💗 สีชมพู</td>
+                                            <td class="border px-2 py-2 text-center" id="pinkSS">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pinkS">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pinkM">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pinkL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pinkXL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pink2XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pink3XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pink4XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pink5XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pink6XL">0</td>
+                                            <td class="border px-2 py-2 text-center" id="pink7XL">0</td>
+                                            <td class="border px-2 py-2 text-center font-bold text-pink-700"
+                                                id="pinkTotal">0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 

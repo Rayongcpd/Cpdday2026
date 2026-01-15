@@ -454,6 +454,14 @@ function updateSummaryTab() {
     const uniqueCoops = new Set();
     const uniqueCoopsByColor = { green: new Set(), blue: new Set(), purple: new Set(), pink: new Set() };
 
+    // Size Counters by Color
+    const sizesByColor = {
+        green: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 },
+        blue: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 },
+        purple: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 },
+        pink: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 }
+    };
+
     allBookings.forEach(booking => {
         if (booking.payment_status === 'ชำระแล้ว') {
             const normalizedName = normalizeCoopName(booking.coop_name);
@@ -461,6 +469,23 @@ function updateSummaryTab() {
             totalShirts += (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0);
             countSS += booking.shirt_ss || 0; countS += booking.shirt_s || 0; countM += booking.shirt_m || 0; countL += booking.shirt_l || 0; countXL += booking.shirt_xl || 0;
             count2XL += booking.shirt_2xl || 0; count3XL += booking.shirt_3xl || 0; count4XL += booking.shirt_4xl || 0; count5XL += booking.shirt_5xl || 0; count6XL += booking.shirt_6xl || 0; count7XL += booking.shirt_7xl || 0;
+
+            // Accumulate Sizes by Color
+            const color = booking.coop_color;
+            if (sizesByColor[color]) {
+                sizesByColor[color].ss += booking.shirt_ss || 0;
+                sizesByColor[color].s += booking.shirt_s || 0;
+                sizesByColor[color].m += booking.shirt_m || 0;
+                sizesByColor[color].l += booking.shirt_l || 0;
+                sizesByColor[color].xl += booking.shirt_xl || 0;
+                sizesByColor[color]['2xl'] += booking.shirt_2xl || 0;
+                sizesByColor[color]['3xl'] += booking.shirt_3xl || 0;
+                sizesByColor[color]['4xl'] += booking.shirt_4xl || 0;
+                sizesByColor[color]['5xl'] += booking.shirt_5xl || 0;
+                sizesByColor[color]['6xl'] += booking.shirt_6xl || 0;
+                sizesByColor[color]['7xl'] += booking.shirt_7xl || 0;
+            }
+
             totalFlowers += booking.flower_count || 0; totalTables += booking.table_count || 0; totalSponsor += booking.sponsor_amount || 0; totalRevenue += booking.total_amount || 0;
             if (uniqueCoopsByColor[booking.coop_color] !== undefined) uniqueCoopsByColor[booking.coop_color].add(normalizedName);
         }
@@ -474,7 +499,25 @@ function updateSummaryTab() {
     document.getElementById('totalRevenue').textContent = totalRevenue.toLocaleString();
     document.getElementById('totalSS').textContent = countSS; document.getElementById('totalS').textContent = countS; document.getElementById('totalM').textContent = countM; document.getElementById('totalL').textContent = countL; document.getElementById('totalXL').textContent = countXL;
     document.getElementById('total2XL').textContent = count2XL; document.getElementById('total3XL').textContent = count3XL; document.getElementById('total4XL').textContent = count4XL; document.getElementById('total5XL').textContent = count5XL; document.getElementById('total6XL').textContent = count6XL; document.getElementById('total7XL').textContent = count7XL;
-    document.getElementById('greenCount').textContent = uniqueCoopsByColor.green.size; document.getElementById('blueCount').textContent = uniqueCoopsByColor.blue.size; document.getElementById('purpleCount').textContent = uniqueCoopsByColor.purple.size; document.getElementById('pinkCount').textContent = uniqueCoopsByColor.pink.size;
+
+    // Update Sizes by Color Table
+    const colors = ['green', 'blue', 'purple', 'pink'];
+    const sizes = ['SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL'];
+    const sizeKeys = ['ss', 's', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl'];
+
+    colors.forEach(color => {
+        let colorTotal = 0;
+        sizeKeys.forEach((key, index) => {
+            const value = sizesByColor[color][key];
+            colorTotal += value;
+            const elementId = color + sizes[index];
+            const element = document.getElementById(elementId);
+            if (element) element.textContent = value;
+        });
+        // Update total for this color
+        const totalElement = document.getElementById(color + 'Total');
+        if (totalElement) totalElement.textContent = colorTotal;
+    });
 
     const bookingIdHeader = document.getElementById('bookingIdHeader'); const distributionHeader = document.getElementById('distributionHeader');
     if (isAdmin) { bookingIdHeader.classList.remove('hidden'); distributionHeader.classList.remove('hidden'); } else { bookingIdHeader.classList.add('hidden'); distributionHeader.classList.add('hidden'); }
