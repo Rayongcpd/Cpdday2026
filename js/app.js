@@ -519,8 +519,19 @@ function updateSummaryTab() {
         if (totalElement) totalElement.textContent = colorTotal;
     });
 
-    const bookingIdHeader = document.getElementById('bookingIdHeader'); const distributionHeader = document.getElementById('distributionHeader');
-    if (isAdmin) { bookingIdHeader.classList.remove('hidden'); distributionHeader.classList.remove('hidden'); } else { bookingIdHeader.classList.add('hidden'); distributionHeader.classList.add('hidden'); }
+    const bookingIdHeader = document.getElementById('bookingIdHeader');
+    const distributionHeader = document.getElementById('distributionHeader');
+    const pdfExportHeader = document.getElementById('pdfExportHeader');
+
+    if (isAdmin) {
+        bookingIdHeader.classList.remove('hidden');
+        distributionHeader.classList.remove('hidden');
+        if (pdfExportHeader) pdfExportHeader.classList.remove('hidden');
+    } else {
+        bookingIdHeader.classList.add('hidden');
+        distributionHeader.classList.add('hidden');
+        if (pdfExportHeader) pdfExportHeader.classList.add('hidden');
+    }
 
     const tbody = document.getElementById('summaryTableBody'); tbody.innerHTML = '';
     let filteredBookings = allBookings; if (summarySearchQuery) filteredBookings = allBookings.filter(b => matchSearchQuery(b, summarySearchQuery));
@@ -538,7 +549,10 @@ function updateSummaryTab() {
         let statusColor = 'bg-yellow-100 text-yellow-700'; if (booking.payment_status === 'ชำระแล้ว') statusColor = 'bg-green-100 text-green-700'; else if (booking.payment_status === 'รอตรวจสอบ') statusColor = 'bg-blue-100 text-blue-700';
         const distributionStatus = booking.distribution_status || 'ยังไม่แจก'; const isDistributed = distributionStatus === 'แจกแล้ว'; const distributionBadgeColor = isDistributed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'; const distributionIcon = isDistributed ? '✅' : '⏳';
         const row = document.createElement('tr'); row.className = 'hover:bg-gray-50';
-        row.innerHTML = `<td class="border px-4 py-2">${booking.coop_name}</td><td class="border px-4 py-2 text-center">${colorNameFull[booking.coop_color]}</td><td class="border px-4 py-2 text-center">${totalShirts}</td><td class="border px-4 py-2 text-center">${booking.flower_count || 0}</td><td class="border px-4 py-2 text-center">${booking.table_count || 0}</td><td class="border px-4 py-2 text-center ${sponsorAmount > 0 ? 'text-green-600' : ''}">${sponsorAmount > 0 ? sponsorAmount.toLocaleString() : '-'}</td><td class="border px-4 py-2 text-center font-semibold">${(booking.total_amount || 0).toLocaleString()}</td><td class="border px-4 py-2 text-center"><button onclick="showSizeDetail('${booking.id}')" class="bg-indigo-100 text-indigo-600 hover:bg-indigo-200 p-2 rounded-full transition-colors" title="ดูรายละเอียดไซส์">👕</button></td><td class="border px-4 py-2 text-center"><span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">${booking.payment_status}</span></td><td class="border px-4 py-2 text-center font-mono text-sm text-gray-600 ${isAdmin ? '' : 'hidden'}"><div>${booking.id}</div>${booking.proof_url ? `<button onclick="openGallery('${booking.proof_url}')" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded mt-1 inline-flex items-center gap-1">📄 สลิปการโอน</button>` : ''}</td><td class="border px-4 py-2 text-center ${isAdmin ? '' : 'hidden'}"><label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" ${isDistributed ? 'checked' : ''} onchange="toggleDistributionStatus('${booking.id}', this.checked)" class="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500"><span class="px-2 py-1 rounded-full text-xs font-medium ${distributionBadgeColor}">${distributionIcon} ${distributionStatus}</span></label></td>`;
+        row.innerHTML = `<td class="border px-4 py-2">${booking.coop_name}</td><td class="border px-4 py-2 text-center">${colorNameFull[booking.coop_color]}</td><td class="border px-4 py-2 text-center">${totalShirts}</td><td class="border px-4 py-2 text-center">${booking.flower_count || 0}</td><td class="border px-4 py-2 text-center">${booking.table_count || 0}</td><td class="border px-4 py-2 text-center ${sponsorAmount > 0 ? 'text-green-600' : ''}">${sponsorAmount > 0 ? sponsorAmount.toLocaleString() : '-'}</td><td class="border px-4 py-2 text-center font-semibold">${(booking.total_amount || 0).toLocaleString()}</td><td class="border px-4 py-2 text-center"><button onclick="showSizeDetail('${booking.id}')" class="bg-indigo-100 text-indigo-600 hover:bg-indigo-200 p-2 rounded-full transition-colors" title="ดูรายละเอียดไซส์">👕</button></td><td class="border px-4 py-2 text-center"><span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">${booking.payment_status}</span></td>
+        <td class="border px-4 py-2 text-center font-mono text-sm text-gray-600 ${isAdmin ? '' : 'hidden'}"><div>${booking.id}</div>${booking.proof_url ? `<button onclick="openGallery('${booking.proof_url}')" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded mt-1 inline-flex items-center gap-1">📄 สลิป</button>` : ''}</td>
+        <td class="border px-4 py-2 text-center ${isAdmin ? '' : 'hidden'}"><button onclick="generateCoopPDF('${booking.id}')" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-full text-sm font-medium transition-colors">📄 PDF</button></td>
+        <td class="border px-4 py-2 text-center ${isAdmin ? '' : 'hidden'}"><label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" ${isDistributed ? 'checked' : ''} onchange="toggleDistributionStatus('${booking.id}', this.checked)" class="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500"><span class="px-2 py-1 rounded-full text-xs font-medium ${distributionBadgeColor}">${distributionIcon} ${distributionStatus}</span></label></td>`;
         tbody.appendChild(row);
     });
 }
@@ -555,6 +569,264 @@ async function toggleDistributionStatus(id, isChecked) {
     const newStatus = isChecked ? 'แจกแล้ว' : 'ยังไม่แจก'; showLoading(true);
     try { const result = await ApiClient.updateDistributionStatus(id, newStatus); showLoading(false); if (result.isOk) { showToast(`อัพเดตสถานะเป็น "${newStatus}" สำเร็จ!`, 'success'); const booking = allBookings.find(b => b.id === id); if (booking) booking.distribution_status = newStatus; updateSummaryTab(); } else { showToast('เกิดข้อผิดพลาด: ' + result.error, 'error'); updateSummaryTab(); } }
     catch (error) { showLoading(false); showToast('Connection error: ' + error.message, 'error'); updateSummaryTab(); }
+}
+
+async function generateCoopPDF(coopId) {
+    const booking = allBookings.find(b => b.id === coopId);
+    if (!booking) return;
+
+    // คำนวณยอดรวม
+    const shirtTotal = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) +
+        (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) +
+        (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0);
+
+    const shirtPrice = shirtTotal * 300;
+    const flowerPrice = (booking.flower_count || 0) * 600;
+    const tablePrice = (booking.table_count || 0) * 3000;
+    const sponsorPrice = (booking.sponsor_amount || 0);
+    const totalPrice = shirtPrice + flowerPrice + tablePrice + sponsorPrice;
+
+    const colorNameFull = { 'green': '🟢 สีเขียว', 'blue': '🔵 สีฟ้า', 'purple': '🟣 สีม่วง', 'pink': '💗 สีชมพู' };
+
+    // วันที่ปัจจุบัน (พ.ศ.)
+    const now = new Date();
+    const dateStr = `${now.getDate()}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear() + 543}`;
+
+    // สร้าง template HTML (Compact Version - No Garuda, 1 Page Layout)
+    const pdfContent = `
+        <div id="pdf-content" style="font-family: 'Kanit', sans-serif; color: #000; padding: 40px; background: white; width: 794px; min-height: 1120px; box-sizing: border-box; position: relative;">
+            
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="font-size: 24px; font-weight: bold; margin: 0; line-height: 1.2;">ใบสรุปการสั่งจองเสื้องานวันสหกรณ์แห่งชาติ</h1>
+                <h2 style="font-size: 18px; font-weight: normal; margin: 5px 0 0 0;">ประจำปี พ.ศ. 2569</h2>
+            </div>
+
+            <div style="border-bottom: 3px solid #22c55e; margin-bottom: 25px;"></div>
+
+            <!-- Coop Info -->
+            <div style="background-color: #f9fafb; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <table style="width: 100%; border-collapse: separate; border-spacing: 0 8px;">
+                    <tr>
+                        <td style="width: 120px; font-weight: 600; color: #374151; font-size: 16px;">ชื่อสหกรณ์:</td>
+                        <td style="font-size: 18px; font-weight: bold; color: #111827;">${booking.coop_name}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #374151; font-size: 16px;">สีทีมกีฬา:</td>
+                        <td>
+                            <span style="display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 16px; font-weight: 500; color: white; background-color: ${booking.coop_color === 'green' ? '#22c55e' : booking.coop_color === 'blue' ? '#3b82f6' : booking.coop_color === 'purple' ? '#a855f7' : '#ec4899'};">
+                                ${colorNameFull[booking.coop_color]}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0; font-weight: 600; color: #374151; font-size: 16px;">Booking ID:</td>
+                        <td style="padding: 5px 0; font-family: monospace; color: #6b7280; font-size: 16px;">${booking.id}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Shirt Details -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 16px; font-weight: bold; color: #374151; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    📦 รายละเอียดเสื้อที่สั่ง (ตัวละ 300 บาท)
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Column 1 -->
+                    <div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            <thead>
+                                <tr style="background-color: #f3f4f6;">
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb;">ไซส์</th>
+                                    <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb;">จำนวน</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #e5e7eb;">บาท</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${generateShirtRowPDF('SS', booking.shirt_ss)}
+                                ${generateShirtRowPDF('S', booking.shirt_s)}
+                                ${generateShirtRowPDF('M', booking.shirt_m)}
+                                ${generateShirtRowPDF('L', booking.shirt_l)}
+                                ${generateShirtRowPDF('XL', booking.shirt_xl)}
+                                ${generateShirtRowPDF('2XL', booking.shirt_2xl)}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Column 2 -->
+                    <div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            <thead>
+                                <tr style="background-color: #f3f4f6;">
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb;">ไซส์</th>
+                                    <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb;">จำนวน</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #e5e7eb;">บาท</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${generateShirtRowPDF('3XL', booking.shirt_3xl)}
+                                ${generateShirtRowPDF('4XL', booking.shirt_4xl)}
+                                ${generateShirtRowPDF('5XL', booking.shirt_5xl)}
+                                ${generateShirtRowPDF('6XL', booking.shirt_6xl)}
+                                ${generateShirtRowPDF('7XL', booking.shirt_7xl)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Total Shirts Summary -->
+                <div style="margin-top: 10px; padding: 10px; background-color: #f3f4f6; border-radius: 6px; text-align: right; font-weight: bold; font-size: 14px;">
+                    รวมเสื้อทั้งหมด <span style="font-size: 16px; color: #111827;">${shirtTotal}</span> ตัว 
+                    <span style="margin: 0 10px; color: #d1d5db;">|</span>
+                    รวมเป็นเงิน <span style="font-size: 16px; color: #111827;">${shirtPrice.toLocaleString()}</span> บาท
+                </div>
+            </div>
+
+            <!-- Other Items & Grand Total Block -->
+            <div style="display: flex; gap: 20px; align-items: flex-start;">
+                
+                <!-- Other Items -->
+                <div style="flex: 1;">
+                    <h3 style="font-size: 16px; font-weight: bold; color: #374151; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        🎁 รายการอื่นๆ
+                    </h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <tr style="border-bottom: 1px solid #f3f4f6;">
+                            <td style="padding: 8px 0;">พานพุ่ม (600 บ.)</td>
+                            <td style="padding: 8px 0; text-align: right;">${(booking.flower_count || 0)} พาน</td>
+                            <td style="padding: 8px 0; text-align: right; font-weight: 500;">${flowerPrice.toLocaleString()}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f3f4f6;">
+                            <td style="padding: 8px 0;">โต๊ะจีน (3,000 บ.)</td>
+                            <td style="padding: 8px 0; text-align: right;">${(booking.table_count || 0)} โต๊ะ</td>
+                            <td style="padding: 8px 0; text-align: right; font-weight: 500;">${tablePrice.toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0;">เงินสนับสนุน</td>
+                            <td style="padding: 8px 0; text-align: right;">-</td>
+                            <td style="padding: 8px 0; text-align: right; font-weight: 500; color: #16a34a;">+${sponsorPrice.toLocaleString()}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Grand Total -->
+                <div style="width: 280px;">
+                    <h3 style="font-size: 16px; font-weight: bold; color: #b45309; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        💰 ยอดรวมทั้งสิ้น
+                    </h3>
+                    <div style="background-color: #22c55e10; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; text-align: center;">
+                        <div style="font-size: 32px; font-weight: 900; color: #22c55e; line-height: 1;">
+                            ${totalPrice.toLocaleString()}
+                        </div>
+                        <div style="font-size: 14px; color: #15803d; margin-top: 5px;">บาทถ้วน</div>
+                    </div>
+                    ${booking.sponsor_amount > 0 ? `
+                    <div style="margin-top: 10px; text-align: center; font-size: 12px; color: #16a34a;">
+                        (รวมเงินสนับสนุน +${booking.sponsor_amount.toLocaleString()} บาทแล้ว)
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+
+            <!-- Footer (Absolute Bottom) -->
+            <div style="margin-top: auto; padding-top: 40px; text-align: right;">
+                <p style="font-size: 12px; color: #9ca3af; margin: 0;">วันที่พิมพ์: ${dateStr}</p>
+                <p style="font-size: 12px; color: #9ca3af; margin: 2px 0 0 0;">สำนักงานสหกรณ์จังหวัดระยอง</p>
+            </div>
+
+        </div>
+    `;
+
+    // สร้าง container ชั่วคราว
+    const container = document.createElement('div');
+    container.innerHTML = pdfContent;
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.zIndex = '9999';
+    container.style.backgroundColor = 'white';
+    container.style.width = '794px';
+    container.style.boxSizing = 'border-box';
+
+    // Add loading indicator
+    const loadingMsg = document.createElement('div');
+    loadingMsg.innerHTML = '⏳ กำลังสร้างไฟล์ PDF...';
+    loadingMsg.style.position = 'fixed';
+    loadingMsg.style.top = '50%';
+    loadingMsg.style.left = '50%';
+    loadingMsg.style.transform = 'translate(-50%, -50%)';
+    loadingMsg.style.background = 'rgba(0,0,0,0.8)';
+    loadingMsg.style.color = 'white';
+    loadingMsg.style.padding = '20px 40px';
+    loadingMsg.style.borderRadius = '10px';
+    loadingMsg.style.zIndex = '10000';
+    loadingMsg.style.fontSize = '20px';
+    loadingMsg.style.fontFamily = "'Kanit', sans-serif";
+
+    document.body.appendChild(container);
+    document.body.appendChild(loadingMsg);
+
+    // ตั้งค่า PDF
+    const opt = {
+        margin: [0, 0, 0, 0],
+        filename: `สรุปการจอง_${booking.coop_name.replace(/\\s+/g, '_')}_${booking.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+            scale: 2,
+            useCORS: true,
+            letterRendering: true,
+            logging: false,
+            windowWidth: 794,
+            scrollX: 0,
+            scrollY: 0,
+            x: 0,
+            y: 0
+        },
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
+        },
+        pagebreak: { mode: 'avoid-all' }
+    };
+
+    // รอ font โหลดเสร็จ
+    document.fonts.ready.then(() => {
+        return new Promise(resolve => setTimeout(resolve, 500));
+    }).then(() => {
+        // หา element เนื้อหาภายใน container
+        const element = container.firstElementChild;
+        return html2pdf().set(opt).from(element).save();
+    }).then(() => {
+        document.body.removeChild(container);
+        document.body.removeChild(loadingMsg);
+        showToast('สร้าง PDF สำเร็จ!', 'success');
+    }).catch(err => {
+        console.error('PDF Error:', err);
+        showToast('เกิดข้อผิดพลาดในการสร้าง PDF', 'error');
+        if (document.body.contains(container)) document.body.removeChild(container);
+        if (document.body.contains(loadingMsg)) document.body.removeChild(loadingMsg);
+    });
+}
+
+function generateShirtRowPDF(size, count) {
+    if (!count || count === 0) {
+        return `
+        <tr style="color: #d1d5db;">
+            <td style="padding: 8px; border: 1px solid #f3f4f6;">${size}</td>
+            <td style="padding: 8px; text-align: center; border: 1px solid #f3f4f6;">-</td>
+            <td style="padding: 8px; text-align: right; border: 1px solid #f3f4f6;">-</td>
+        </tr>
+        `;
+    }
+    return `
+    <tr>
+        <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: 500;">${size}</td>
+        <td style="padding: 8px; text-align: center; border: 1px solid #e5e7eb;">${count}</td>
+        <td style="padding: 8px; text-align: right; border: 1px solid #e5e7eb;">${(count * 300).toLocaleString()}</td>
+    </tr>
+    `;
 }
 
 document.addEventListener('DOMContentLoaded', init);
