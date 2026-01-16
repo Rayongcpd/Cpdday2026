@@ -450,12 +450,21 @@ function changeSummaryPage(direction) { summaryCurrentPage += direction; updateS
 function normalizeCoopName(name) { if (!name) return ''; return name.toLowerCase().replace(/\s+/g, '').replace(/[,.\-_()]/g, '').trim(); }
 
 function updateSummaryTab() {
-    let totalShirts = 0, totalFlowers = 0, totalTables = 0, totalSponsor = 0, totalRevenue = 0;
+    // === สรุปข้อมูลทั้งหมด (All Bookings) ===
+    let allShirts = 0, allFlowers = 0, allTables = 0, allSponsor = 0, allRevenue = 0;
+    const allUniqueCoops = new Set();
+
+    // === สรุปข้อมูลที่ชำระแล้ว (Paid) ===
+    let paidShirts = 0, paidFlowers = 0, paidTables = 0, paidSponsor = 0, paidRevenue = 0;
     let countSS = 0, countS = 0, countM = 0, countL = 0, countXL = 0, count2XL = 0, count3XL = 0, count4XL = 0, count5XL = 0, count6XL = 0, count7XL = 0;
-    const uniqueCoops = new Set();
+    const paidUniqueCoops = new Set();
     const uniqueCoopsByColor = { green: new Set(), blue: new Set(), purple: new Set(), pink: new Set() };
 
-    // Size Counters by Color
+    // === สรุปข้อมูลที่รอชำระ (Pending) ===
+    let pendingShirts = 0, pendingFlowers = 0, pendingTables = 0, pendingSponsor = 0, pendingRevenue = 0;
+    const pendingUniqueCoops = new Set();
+
+    // Size Counters by Color (for paid only)
     const sizesByColor = {
         green: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 },
         blue: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 },
@@ -464,10 +473,21 @@ function updateSummaryTab() {
     };
 
     allBookings.forEach(booking => {
+        const normalizedName = normalizeCoopName(booking.coop_name);
+        const bookingShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0);
+
+        // All Bookings Summary
+        allUniqueCoops.add(normalizedName);
+        allShirts += bookingShirts;
+        allFlowers += booking.flower_count || 0;
+        allTables += booking.table_count || 0;
+        allSponsor += booking.sponsor_amount || 0;
+        allRevenue += booking.total_amount || 0;
+
         if (booking.payment_status === 'ชำระแล้ว') {
-            const normalizedName = normalizeCoopName(booking.coop_name);
-            uniqueCoops.add(normalizedName);
-            totalShirts += (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0);
+            // Paid Summary
+            paidUniqueCoops.add(normalizedName);
+            paidShirts += bookingShirts;
             countSS += booking.shirt_ss || 0; countS += booking.shirt_s || 0; countM += booking.shirt_m || 0; countL += booking.shirt_l || 0; countXL += booking.shirt_xl || 0;
             count2XL += booking.shirt_2xl || 0; count3XL += booking.shirt_3xl || 0; count4XL += booking.shirt_4xl || 0; count5XL += booking.shirt_5xl || 0; count6XL += booking.shirt_6xl || 0; count7XL += booking.shirt_7xl || 0;
 
@@ -487,17 +507,44 @@ function updateSummaryTab() {
                 sizesByColor[color]['7xl'] += booking.shirt_7xl || 0;
             }
 
-            totalFlowers += booking.flower_count || 0; totalTables += booking.table_count || 0; totalSponsor += booking.sponsor_amount || 0; totalRevenue += booking.total_amount || 0;
+            paidFlowers += booking.flower_count || 0; paidTables += booking.table_count || 0; paidSponsor += booking.sponsor_amount || 0; paidRevenue += booking.total_amount || 0;
             if (uniqueCoopsByColor[booking.coop_color] !== undefined) uniqueCoopsByColor[booking.coop_color].add(normalizedName);
+        } else {
+            // Pending Summary (รอชำระ, รอตรวจสอบ)
+            pendingUniqueCoops.add(normalizedName);
+            pendingShirts += bookingShirts;
+            pendingFlowers += booking.flower_count || 0;
+            pendingTables += booking.table_count || 0;
+            pendingSponsor += booking.sponsor_amount || 0;
+            pendingRevenue += booking.total_amount || 0;
         }
     });
 
-    document.getElementById('totalCoops').textContent = uniqueCoops.size;
-    document.getElementById('totalShirts').textContent = totalShirts;
-    document.getElementById('totalFlowers').textContent = totalFlowers;
-    document.getElementById('totalTables').textContent = totalTables;
-    document.getElementById('totalSponsor').textContent = totalSponsor.toLocaleString();
-    document.getElementById('totalRevenue').textContent = totalRevenue.toLocaleString();
+    // Update "ทั้งหมด" cards
+    document.getElementById('totalCoops').textContent = allUniqueCoops.size;
+    document.getElementById('totalShirts').textContent = allShirts;
+    document.getElementById('totalFlowers').textContent = allFlowers;
+    document.getElementById('totalTables').textContent = allTables;
+    document.getElementById('totalSponsor').textContent = allSponsor.toLocaleString();
+    document.getElementById('totalRevenue').textContent = allRevenue.toLocaleString();
+
+    // Update "ชำระแล้ว" cards
+    document.getElementById('paidCoops').textContent = paidUniqueCoops.size;
+    document.getElementById('paidShirts').textContent = paidShirts;
+    document.getElementById('paidFlowers').textContent = paidFlowers;
+    document.getElementById('paidTables').textContent = paidTables;
+    document.getElementById('paidSponsor').textContent = paidSponsor.toLocaleString();
+    document.getElementById('paidRevenue').textContent = paidRevenue.toLocaleString();
+
+    // Update "รอชำระ" cards
+    document.getElementById('pendingCoops').textContent = pendingUniqueCoops.size;
+    document.getElementById('pendingShirts').textContent = pendingShirts;
+    document.getElementById('pendingFlowers').textContent = pendingFlowers;
+    document.getElementById('pendingTables').textContent = pendingTables;
+    document.getElementById('pendingSponsor').textContent = pendingSponsor.toLocaleString();
+    document.getElementById('pendingRevenue').textContent = pendingRevenue.toLocaleString();
+
+    // Update size breakdown (still based on paid only)
     document.getElementById('totalSS').textContent = countSS; document.getElementById('totalS').textContent = countS; document.getElementById('totalM').textContent = countM; document.getElementById('totalL').textContent = countL; document.getElementById('totalXL').textContent = countXL;
     document.getElementById('total2XL').textContent = count2XL; document.getElementById('total3XL').textContent = count3XL; document.getElementById('total4XL').textContent = count4XL; document.getElementById('total5XL').textContent = count5XL; document.getElementById('total6XL').textContent = count6XL; document.getElementById('total7XL').textContent = count7XL;
 
