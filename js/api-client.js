@@ -76,5 +76,12 @@ const ApiClient = {
      */
     async verifyAdminPin(pin) {
         return await this.request('verifyAdminPin', { pin });
+    },
+
+    /**
+     * Check if phone number is blocked (Office staff check)
+     */
+    async checkBlockedPhone(phone) {
+        return await this.request('checkBlockedPhone', { phone });
     }
 };

@@ -663,6 +663,36 @@
         </div>
     </div>
 
+    <!-- Blocked Phone Modal -->
+    <div id="blockedPhoneModal" class="hidden fixed inset-0 modal-backdrop z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-red-100 p-3 rounded-full">
+                    <span class="text-3xl">🚫</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">ไม่สามารถลงทะเบียนได้</h3>
+            </div>
+
+            <div class="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-4">
+                <p class="text-red-700 font-medium mb-2">⚠️ หมายเลขโทรศัพท์นี้ไม่สามารถใช้ลงทะเบียนได้</p>
+                <p class="text-gray-700">
+                    กรุณา <strong class="text-red-600">ติดต่อฝ่ายบริหาร</strong> เพื่อทำการจองเสื้อ
+                </p>
+            </div>
+
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+                <p class="font-semibold text-blue-800 mb-2">📞 ช่องทางติดต่อ:</p>
+                <p class="text-gray-700">สำนักงานสหกรณ์จังหวัดระยอง</p>
+                <p class="text-gray-700">โทร: 038-694-113</p>
+            </div>
+
+            <button onclick="closeBlockedPhoneModal()"
+                class="w-full bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-colors">
+                ปิด
+            </button>
+        </div>
+    </div>
+
     <!-- Image Gallery Modal -->
     <div id="imageGalleryModal" class="hidden fixed inset-0 modal-backdrop z-[60] flex items-center justify-center p-4">
         <div class="relative bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">

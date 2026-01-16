@@ -157,12 +157,33 @@ function selectColor(color) {
 }
 
 // ===== Booking Form =====
-function previewBooking() {
+let isPhoneVerified = false;  // Track if phone has been verified
+
+async function previewBooking() {
     const coopName = document.getElementById('coopName').value.trim();
     const bookingPin = document.getElementById('bookingPin').value.trim();
     if (!coopName) { showToast('กรุณากรอกชื่อสหกรณ์', 'error'); return; }
     if (!bookingPin || bookingPin.length !== 10) { showToast('กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก', 'error'); return; }
     if (!selectedColor) { showToast('กรุณาเลือกสีทีมกีฬา', 'error'); return; }
+
+    // Check if phone is blocked (office staff) - skip if editing existing booking
+    if (!editingBookingId && !isPhoneVerified) {
+        showLoading(true);
+        try {
+            const result = await ApiClient.checkBlockedPhone(bookingPin);
+            showLoading(false);
+            if (result.isBlocked) {
+                // Show blocked phone modal
+                showBlockedPhoneModal();
+                return;
+            }
+            isPhoneVerified = true; // Mark as verified for this session
+        } catch (error) {
+            showLoading(false);
+            // If API fails, continue anyway (fail-open approach)
+            console.warn('Phone verification failed, continuing anyway:', error);
+        }
+    }
 
     const shirtSS = parseInt(document.getElementById('shirtSS').value) || 0;
     const shirtS = parseInt(document.getElementById('shirtS').value) || 0;
@@ -278,7 +299,19 @@ function resetForm() {
     pinInput.value = ''; pinInput.disabled = false; pinInput.classList.remove('bg-gray-100');
     ['shirtSS', 'shirtS', 'shirtM', 'shirtL', 'shirtXL', 'shirt2XL', 'shirt3XL', 'shirt4XL', 'shirt5XL', 'shirt6XL', 'shirt7XL', 'flowerCount', 'tableCount', 'sponsorAmount'].forEach(id => document.getElementById(id).value = '');
     editingBookingId = null; selectedColor = '';
+    isPhoneVerified = false;  // Reset phone verification when form is cleared
     document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('ring-4', 'ring-indigo-500', 'bg-indigo-50'));
+}
+
+// ===== Blocked Phone Modal =====
+function showBlockedPhoneModal() {
+    document.getElementById('blockedPhoneModal').classList.remove('hidden');
+}
+
+function closeBlockedPhoneModal() {
+    document.getElementById('blockedPhoneModal').classList.add('hidden');
+    // Clear phone input for security
+    document.getElementById('bookingPin').value = '';
 }
 
 function startEditBooking() {
