@@ -318,90 +318,40 @@
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 สรุปข้อมูลทั้งหมด</h2>
 
-                    <!-- Summary Cards - ทั้งหมด -->
-                    <h3 class="text-lg font-bold text-gray-700 mb-3">📊 สรุปข้อมูลทั้งหมด</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+                    <!-- Summary Cards with Dropdown Filter -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <h3 class="text-lg font-bold text-gray-700" id="summaryCardsTitle">📊 สรุปข้อมูลทั้งหมด</h3>
+                        <select id="summaryFilter" onchange="updateSummaryCards()"
+                            class="px-4 py-2 border-2 border-indigo-300 rounded-lg bg-white text-indigo-700 font-medium focus:outline-none focus:border-indigo-500">
+                            <option value="all">📊 ทั้งหมด</option>
+                            <option value="paid">✅ ชำระแล้ว</option>
+                            <option value="pending">⏳ รอชำระ</option>
+                        </select>
+                    </div>
+                    <div id="summaryCardsContainer" class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                         <div class="bg-blue-100 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-blue-700" id="totalCoops">0</p>
-                            <p class="text-sm text-gray-700 mt-1">สหกรณ์ทั้งหมด</p>
+                            <p class="text-3xl font-bold text-blue-700" id="cardCoops">0</p>
+                            <p class="text-sm text-gray-700 mt-1">สหกรณ์</p>
                         </div>
                         <div class="bg-green-100 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-green-700" id="totalShirts">0</p>
-                            <p class="text-sm text-gray-700 mt-1">เสื้อทั้งหมด (ตัว)</p>
+                            <p class="text-3xl font-bold text-green-700" id="cardShirts">0</p>
+                            <p class="text-sm text-gray-700 mt-1">เสื้อ (ตัว)</p>
                         </div>
                         <div class="bg-purple-100 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-purple-700" id="totalFlowers">0</p>
-                            <p class="text-sm text-gray-700 mt-1">พานพุ่มทั้งหมด (พาน)</p>
+                            <p class="text-3xl font-bold text-purple-700" id="cardFlowers">0</p>
+                            <p class="text-sm text-gray-700 mt-1">พานพุ่ม (พาน)</p>
                         </div>
                         <div class="bg-pink-100 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-pink-700" id="totalTables">0</p>
-                            <p class="text-sm text-gray-700 mt-1">โต๊ะจีนทั้งหมด (โต๊ะ)</p>
+                            <p class="text-3xl font-bold text-pink-700" id="cardTables">0</p>
+                            <p class="text-sm text-gray-700 mt-1">โต๊ะจีน (โต๊ะ)</p>
                         </div>
                         <div class="bg-teal-100 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-teal-700" id="totalSponsor">0</p>
+                            <p class="text-3xl font-bold text-teal-700" id="cardSponsor">0</p>
                             <p class="text-sm text-gray-700 mt-1">เงินสนับสนุน (บาท)</p>
                         </div>
                         <div class="bg-amber-100 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-amber-700" id="totalRevenue">0</p>
+                            <p class="text-3xl font-bold text-amber-700" id="cardRevenue">0</p>
                             <p class="text-sm text-gray-700 mt-1">ยอดเงินรวม (บาท)</p>
-                        </div>
-                    </div>
-
-                    <!-- Summary Cards - ชำระแล้ว -->
-                    <h3 class="text-lg font-bold text-green-700 mb-3">✅ สรุปข้อมูลที่ชำระแล้ว</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-                        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-green-600" id="paidCoops">0</p>
-                            <p class="text-sm text-gray-600 mt-1">สหกรณ์</p>
-                        </div>
-                        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-green-600" id="paidShirts">0</p>
-                            <p class="text-sm text-gray-600 mt-1">เสื้อ (ตัว)</p>
-                        </div>
-                        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-green-600" id="paidFlowers">0</p>
-                            <p class="text-sm text-gray-600 mt-1">พานพุ่ม (พาน)</p>
-                        </div>
-                        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-green-600" id="paidTables">0</p>
-                            <p class="text-sm text-gray-600 mt-1">โต๊ะจีน (โต๊ะ)</p>
-                        </div>
-                        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-green-600" id="paidSponsor">0</p>
-                            <p class="text-sm text-gray-600 mt-1">เงินสนับสนุน (บาท)</p>
-                        </div>
-                        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-green-600" id="paidRevenue">0</p>
-                            <p class="text-sm text-gray-600 mt-1">ยอดเงินรวม (บาท)</p>
-                        </div>
-                    </div>
-
-                    <!-- Summary Cards - รอชำระ -->
-                    <h3 class="text-lg font-bold text-yellow-600 mb-3">⏳ สรุปข้อมูลที่รอชำระ</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-                        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-yellow-600" id="pendingCoops">0</p>
-                            <p class="text-sm text-gray-600 mt-1">สหกรณ์</p>
-                        </div>
-                        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-yellow-600" id="pendingShirts">0</p>
-                            <p class="text-sm text-gray-600 mt-1">เสื้อ (ตัว)</p>
-                        </div>
-                        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-yellow-600" id="pendingFlowers">0</p>
-                            <p class="text-sm text-gray-600 mt-1">พานพุ่ม (พาน)</p>
-                        </div>
-                        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-yellow-600" id="pendingTables">0</p>
-                            <p class="text-sm text-gray-600 mt-1">โต๊ะจีน (โต๊ะ)</p>
-                        </div>
-                        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-yellow-600" id="pendingSponsor">0</p>
-                            <p class="text-sm text-gray-600 mt-1">เงินสนับสนุน (บาท)</p>
-                        </div>
-                        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-yellow-600" id="pendingRevenue">0</p>
-                            <p class="text-sm text-gray-600 mt-1">ยอดเงินรวม (บาท)</p>
                         </div>
                     </div>
 

@@ -451,70 +451,45 @@ function normalizeCoopName(name) { if (!name) return ''; return name.toLowerCase
 
 function updateSummaryTab() {
     // === สรุปข้อมูลทั้งหมด (All Bookings) ===
-    let allShirts = 0, allFlowers = 0, allTables = 0, allSponsor = 0, allRevenue = 0;
-    const allUniqueCoops = new Set();
-
-    // === สรุปข้อมูลที่ชำระแล้ว (Paid) ===
-    let paidShirts = 0, paidFlowers = 0, paidTables = 0, paidSponsor = 0, paidRevenue = 0;
-    const paidUniqueCoops = new Set();
-    const uniqueCoopsByColor = { green: new Set(), blue: new Set(), purple: new Set(), pink: new Set() };
-
-    // === สรุปข้อมูลที่รอชำระ (Pending) ===
-    let pendingShirts = 0, pendingFlowers = 0, pendingTables = 0, pendingSponsor = 0, pendingRevenue = 0;
-    const pendingUniqueCoops = new Set();
+    window.summaryData = {
+        all: { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 },
+        paid: { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 },
+        pending: { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 }
+    };
 
     allBookings.forEach(booking => {
         const normalizedName = normalizeCoopName(booking.coop_name);
         const bookingShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0);
 
         // All Bookings Summary
-        allUniqueCoops.add(normalizedName);
-        allShirts += bookingShirts;
-        allFlowers += booking.flower_count || 0;
-        allTables += booking.table_count || 0;
-        allSponsor += booking.sponsor_amount || 0;
-        allRevenue += booking.total_amount || 0;
+        window.summaryData.all.coops.add(normalizedName);
+        window.summaryData.all.shirts += bookingShirts;
+        window.summaryData.all.flowers += booking.flower_count || 0;
+        window.summaryData.all.tables += booking.table_count || 0;
+        window.summaryData.all.sponsor += booking.sponsor_amount || 0;
+        window.summaryData.all.revenue += booking.total_amount || 0;
 
         if (booking.payment_status === 'ชำระแล้ว') {
             // Paid Summary
-            paidUniqueCoops.add(normalizedName);
-            paidShirts += bookingShirts;
-            paidFlowers += booking.flower_count || 0; paidTables += booking.table_count || 0; paidSponsor += booking.sponsor_amount || 0; paidRevenue += booking.total_amount || 0;
-            if (uniqueCoopsByColor[booking.coop_color] !== undefined) uniqueCoopsByColor[booking.coop_color].add(normalizedName);
+            window.summaryData.paid.coops.add(normalizedName);
+            window.summaryData.paid.shirts += bookingShirts;
+            window.summaryData.paid.flowers += booking.flower_count || 0;
+            window.summaryData.paid.tables += booking.table_count || 0;
+            window.summaryData.paid.sponsor += booking.sponsor_amount || 0;
+            window.summaryData.paid.revenue += booking.total_amount || 0;
         } else {
             // Pending Summary (รอชำระ, รอตรวจสอบ)
-            pendingUniqueCoops.add(normalizedName);
-            pendingShirts += bookingShirts;
-            pendingFlowers += booking.flower_count || 0;
-            pendingTables += booking.table_count || 0;
-            pendingSponsor += booking.sponsor_amount || 0;
-            pendingRevenue += booking.total_amount || 0;
+            window.summaryData.pending.coops.add(normalizedName);
+            window.summaryData.pending.shirts += bookingShirts;
+            window.summaryData.pending.flowers += booking.flower_count || 0;
+            window.summaryData.pending.tables += booking.table_count || 0;
+            window.summaryData.pending.sponsor += booking.sponsor_amount || 0;
+            window.summaryData.pending.revenue += booking.total_amount || 0;
         }
     });
 
-    // Update "ทั้งหมด" cards
-    document.getElementById('totalCoops').textContent = allUniqueCoops.size;
-    document.getElementById('totalShirts').textContent = allShirts;
-    document.getElementById('totalFlowers').textContent = allFlowers;
-    document.getElementById('totalTables').textContent = allTables;
-    document.getElementById('totalSponsor').textContent = allSponsor.toLocaleString();
-    document.getElementById('totalRevenue').textContent = allRevenue.toLocaleString();
-
-    // Update "ชำระแล้ว" cards
-    document.getElementById('paidCoops').textContent = paidUniqueCoops.size;
-    document.getElementById('paidShirts').textContent = paidShirts;
-    document.getElementById('paidFlowers').textContent = paidFlowers;
-    document.getElementById('paidTables').textContent = paidTables;
-    document.getElementById('paidSponsor').textContent = paidSponsor.toLocaleString();
-    document.getElementById('paidRevenue').textContent = paidRevenue.toLocaleString();
-
-    // Update "รอชำระ" cards
-    document.getElementById('pendingCoops').textContent = pendingUniqueCoops.size;
-    document.getElementById('pendingShirts').textContent = pendingShirts;
-    document.getElementById('pendingFlowers').textContent = pendingFlowers;
-    document.getElementById('pendingTables').textContent = pendingTables;
-    document.getElementById('pendingSponsor').textContent = pendingSponsor.toLocaleString();
-    document.getElementById('pendingRevenue').textContent = pendingRevenue.toLocaleString();
+    // Update summary cards based on dropdown filter
+    updateSummaryCards();
 
     // Update shirt summary based on dropdown filter
     updateShirtSummary();
@@ -555,6 +530,31 @@ function updateSummaryTab() {
         <td class="border px-4 py-2 text-center ${isAdmin ? '' : 'hidden'}"><label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" ${isDistributed ? 'checked' : ''} onchange="toggleDistributionStatus('${booking.id}', this.checked)" class="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500"><span class="px-2 py-1 rounded-full text-xs font-medium ${distributionBadgeColor}">${distributionIcon} ${distributionStatus}</span></label></td>`;
         tbody.appendChild(row);
     });
+}
+
+// ===== Summary Cards with Dropdown Filter =====
+function updateSummaryCards() {
+    const filterValue = document.getElementById('summaryFilter')?.value || 'all';
+    const titleEl = document.getElementById('summaryCardsTitle');
+
+    // Update title based on filter
+    const titles = {
+        all: '📊 สรุปข้อมูลทั้งหมด',
+        paid: '✅ สรุปข้อมูลที่ชำระแล้ว',
+        pending: '⏳ สรุปข้อมูลที่รอชำระ'
+    };
+    if (titleEl) titleEl.textContent = titles[filterValue] || titles.all;
+
+    // Get data based on filter
+    const data = window.summaryData?.[filterValue] || { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 };
+
+    // Update cards
+    document.getElementById('cardCoops').textContent = data.coops.size;
+    document.getElementById('cardShirts').textContent = data.shirts;
+    document.getElementById('cardFlowers').textContent = data.flowers;
+    document.getElementById('cardTables').textContent = data.tables;
+    document.getElementById('cardSponsor').textContent = data.sponsor.toLocaleString();
+    document.getElementById('cardRevenue').textContent = data.revenue.toLocaleString();
 }
 
 // ===== Shirt Summary with Dropdown Filter =====
