@@ -323,7 +323,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                         <div class="bg-blue-100 rounded-lg p-4 text-center">
                             <p class="text-3xl font-bold text-blue-700" id="totalCoops">0</p>
-                            <p class="text-sm text-gray-700 mt-1">สหกรณ์ทั้งหมด (ตัว)</p>
+                            <p class="text-sm text-gray-700 mt-1">สหกรณ์ทั้งหมด</p>
                         </div>
                         <div class="bg-green-100 rounded-lg p-4 text-center">
                             <p class="text-3xl font-bold text-green-700" id="totalShirts">0</p>
@@ -352,7 +352,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                         <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
                             <p class="text-3xl font-bold text-green-600" id="paidCoops">0</p>
-                            <p class="text-sm text-gray-600 mt-1">สหกรณ์ (ตัว)</p>
+                            <p class="text-sm text-gray-600 mt-1">สหกรณ์</p>
                         </div>
                         <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
                             <p class="text-3xl font-bold text-green-600" id="paidShirts">0</p>
@@ -381,7 +381,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                         <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 text-center">
                             <p class="text-3xl font-bold text-yellow-600" id="pendingCoops">0</p>
-                            <p class="text-sm text-gray-600 mt-1">สหกรณ์ (ตัว)</p>
+                            <p class="text-sm text-gray-600 mt-1">สหกรณ์</p>
                         </div>
                         <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 text-center">
                             <p class="text-3xl font-bold text-yellow-600" id="pendingShirts">0</p>
@@ -407,7 +407,15 @@
 
                     <!-- Shirt Size Breakdown -->
                     <div class="mb-6">
-                        <h3 class="text-xl font-bold mb-3 text-gray-700">👕 สรุปยอดเสื้อตามไซส์</h3>
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                            <h3 class="text-xl font-bold text-gray-700">👕 สรุปยอดเสื้อตามไซส์</h3>
+                            <select id="shirtSummaryFilter" onchange="updateShirtSummary()"
+                                class="px-4 py-2 border-2 border-indigo-300 rounded-lg bg-white text-indigo-700 font-medium focus:outline-none focus:border-indigo-500">
+                                <option value="all">📊 ทั้งหมด</option>
+                                <option value="paid">✅ ชำระแล้ว</option>
+                                <option value="pending">⏳ รอชำระ</option>
+                            </select>
+                        </div>
                         <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-2">
                             <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
                                 <p class="text-sm text-gray-600 font-semibold">SS</p>
