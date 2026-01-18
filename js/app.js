@@ -1096,8 +1096,8 @@ function generateShirtSummaryPDF(filterType = 'all') {
                 </div>
             </div>
 
-            <!-- Summary Table by Size -->
-            <div style="margin-bottom: 25px;">
+            <!-- Summary Table by Size - Add page break styling for better pagination -->
+            <div style="margin-bottom: 25px; page-break-before: auto; page-break-inside: avoid; padding-top: 20px;">
                 <h3 style="font-size: 18px; font-weight: bold; color: #374151; margin-bottom: 15px;">📊 ตารางสรุปแยกตามไซส์</h3>
                 <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                     <thead>
@@ -1183,9 +1183,9 @@ function generateShirtSummaryPDF(filterType = 'all') {
     const filterNames = { all: 'ทั้งหมด', paid: 'ชำระแล้ว', pending: 'รอชำระ' };
     const filename = `สรุปยอดเสื้อ_${filterNames[filterType]}_${dateStr.replace(/\//g, '-')}.pdf`;
 
-    // PDF options
+    // PDF options - Add top margin for page 2 visibility
     const opt = {
-        margin: [0, 0, 0, 0],
+        margin: [15, 10, 15, 10], // [top, left, bottom, right] in mm - Added top margin for page 2
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
@@ -1204,7 +1204,7 @@ function generateShirtSummaryPDF(filterType = 'all') {
             format: 'a4',
             orientation: 'portrait'
         },
-        pagebreak: { mode: 'avoid-all' }
+        pagebreak: { mode: 'css', before: '.page-break-before', after: '.page-break-after', avoid: '.page-break-avoid' }
     };
 
     // Wait for fonts and generate PDF
