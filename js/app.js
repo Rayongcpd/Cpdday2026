@@ -1076,7 +1076,7 @@ function generateShirtSummaryPDF(filterType = 'all') {
 
     // PDF Content - One Page Layout
     const pdfContent = `
-        <div id="pdf-content" style="font-family: 'Kanit', sans-serif; color: #1f2937; padding: 25px 35px; background: white; width: 794px; min-height: 1120px; box-sizing: border-box; display: flex; flex-direction: column;">
+        <div id="pdf-content" style="font-family: 'Kanit', sans-serif; color: #1f2937; padding: 25px 20px; background: white; width: 780px; min-height: 1120px; box-sizing: border-box; display: flex; flex-direction: column;">
             
             <!-- Header Row -->
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; border-bottom: 2px solid #22c55e; padding-bottom: 10px;">
@@ -1135,11 +1135,11 @@ function generateShirtSummaryPDF(filterType = 'all') {
             </div>
 
             <!-- Section 3: Grand Total Footer -->
-            <div style="margin-top: 10px; display: flex; gap: 15px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+            <div style="margin-top: 5px; display: flex; gap: 15px; border-top: 1px solid #e5e7eb; padding-top: 12px;">
                 <div style="flex: 1; font-size: 10px; color: #6b7280;">
                      <strong>หมายเหตุ:</strong> ข้อมูล ณ วันที่เอกสารออกจากระบบ ยอดจริงอาจมีการเปลี่ยนแปลงหากมีคำสั่งซื้อเพิ่มเติมหลังจากนี้
                 </div>
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 20px; display: flex; align-items: center; gap: 15px;">
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 16px; display: flex; align-items: center; gap: 15px;">
                      <div style="font-size: 12px; font-weight: 600; color: #166534;">ยอดรวมสุทธิ</div>
                      <div style="font-size: 24px; font-weight: 900; color: #16a34a;">${grandTotal}</div>
                      <div style="font-size: 12px; color: #166534;">ตัว</div>
@@ -1147,7 +1147,7 @@ function generateShirtSummaryPDF(filterType = 'all') {
             </div>
 
             <!-- Footer Small -->
-            <div style="text-align: center; margin-top: 20px; font-size: 9px; color: #9ca3af;">
+            <div style="text-align: center; margin-top: 15px; font-size: 9px; color: #9ca3af;">
                 ระบบบริหารจัดการงานวันสหกรณ์แห่งชาติ จังหวัดระยอง © 2026
             </div>
         </div>
@@ -1196,7 +1196,7 @@ function generateShirtSummaryPDF(filterType = 'all') {
             useCORS: true,
             letterRendering: true,
             logging: false,
-            windowWidth: 794,
+            windowWidth: 780,
             scrollX: 0,
             scrollY: 0,
             x: 0,
