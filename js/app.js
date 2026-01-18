@@ -950,4 +950,279 @@ function generateShirtRowPDF(size, count) {
     `;
 }
 
+/**
+ * Generate PDF Summary for Shirt Orders - For Factory Production
+ * @param {string} filterType - 'all', 'paid', or 'pending'
+ */
+function generateShirtSummaryPDF(filterType = 'all') {
+    // Filter bookings based on type
+    let filteredBookings = allBookings;
+    let filterLabel = '📊 ทั้งหมด';
+    let filterLabelColor = '#4f46e5'; // indigo
+
+    if (filterType === 'paid') {
+        filteredBookings = allBookings.filter(b => b.payment_status === 'ชำระแล้ว');
+        filterLabel = '✅ ชำระแล้ว';
+        filterLabelColor = '#16a34a'; // green
+    } else if (filterType === 'pending') {
+        filteredBookings = allBookings.filter(b => b.payment_status !== 'ชำระแล้ว');
+        filterLabel = '⏳ รอชำระ';
+        filterLabelColor = '#d97706'; // yellow/amber
+    }
+
+    // Calculate sizes by color
+    const colors = [
+        { key: 'green', emoji: '🟢', name: 'สีเขียว', bgColor: '#dcfce7', borderColor: '#22c55e', textColor: '#166534' },
+        { key: 'blue', emoji: '🔵', name: 'สีฟ้า', bgColor: '#dbeafe', borderColor: '#3b82f6', textColor: '#1e40af' },
+        { key: 'purple', emoji: '🟣', name: 'สีม่วง', bgColor: '#f3e8ff', borderColor: '#a855f7', textColor: '#6b21a8' },
+        { key: 'pink', emoji: '💗', name: 'สีชมพู', bgColor: '#fce7f3', borderColor: '#ec4899', textColor: '#9d174d' }
+    ];
+
+    const sizeKeys = ['ss', 's', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl'];
+    const sizeLabels = ['SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL'];
+
+    // Initialize data structure
+    const sizesByColor = {};
+    colors.forEach(c => {
+        sizesByColor[c.key] = { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, total: 0 };
+    });
+
+    // Calculate totals
+    let grandTotal = 0;
+    filteredBookings.forEach(booking => {
+        const color = booking.coop_color;
+        if (sizesByColor[color]) {
+            sizeKeys.forEach(key => {
+                const propName = 'shirt_' + key;
+                const count = booking[propName] || 0;
+                sizesByColor[color][key] += count;
+                sizesByColor[color].total += count;
+                grandTotal += count;
+            });
+        }
+    });
+
+    // Calculate overall totals per size
+    const overallTotals = {};
+    sizeKeys.forEach(key => {
+        overallTotals[key] = colors.reduce((sum, c) => sum + sizesByColor[c.key][key], 0);
+    });
+
+    // Current date
+    const now = new Date();
+    const dateStr = `${now.getDate()}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear() + 543}`;
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+
+    // Generate color cards HTML
+    let colorCardsHTML = '';
+    colors.forEach(c => {
+        const data = sizesByColor[c.key];
+        let sizesHTML = '';
+        sizeKeys.forEach((key, idx) => {
+            if (data[key] > 0) {
+                sizesHTML += `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: rgba(255,255,255,0.7); border-radius: 4px; margin-bottom: 4px;">
+                        <span style="font-weight: 600;">${sizeLabels[idx]}</span>
+                        <span style="font-weight: 700;">${data[key]} ตัว</span>
+                    </div>
+                `;
+            }
+        });
+
+        if (data.total === 0) {
+            sizesHTML = `<p style="text-align: center; color: #999; padding: 20px;">ไม่มียอดจอง</p>`;
+        }
+
+        colorCardsHTML += `
+            <div style="background: ${c.bgColor}; border: 2px solid ${c.borderColor}; border-radius: 12px; padding: 16px; flex: 1; min-width: 160px;">
+                <div style="text-align: center; margin-bottom: 12px;">
+                    <span style="font-size: 28px;">${c.emoji}</span>
+                    <h3 style="font-size: 18px; font-weight: 700; color: ${c.textColor}; margin: 4px 0 0 0;">${c.name}</h3>
+                </div>
+                <div style="font-size: 13px;">
+                    ${sizesHTML}
+                </div>
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 2px dashed ${c.borderColor}; text-align: center;">
+                    <span style="font-size: 14px; color: ${c.textColor};">รวม</span>
+                    <div style="font-size: 26px; font-weight: 900; color: ${c.textColor};">${data.total}</div>
+                    <span style="font-size: 12px; color: ${c.textColor};">ตัว</span>
+                </div>
+            </div>
+        `;
+    });
+
+    // Generate summary table HTML (by size)
+    let summaryTableHTML = '';
+    sizeKeys.forEach((key, idx) => {
+        const total = overallTotals[key];
+        if (total > 0) {
+            summaryTableHTML += `
+                <tr>
+                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; font-weight: 600;">${sizeLabels[idx]}</td>
+                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center;">${sizesByColor.green[key]}</td>
+                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center;">${sizesByColor.blue[key]}</td>
+                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center;">${sizesByColor.purple[key]}</td>
+                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center;">${sizesByColor.pink[key]}</td>
+                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background: #f9fafb;">${total}</td>
+                </tr>
+            `;
+        }
+    });
+
+    // PDF Content
+    const pdfContent = `
+        <div id="pdf-content" style="font-family: 'Kanit', sans-serif; color: #000; padding: 40px; background: white; width: 794px; min-height: 1120px; box-sizing: border-box; display: flex; flex-direction: column;">
+            
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="font-size: 26px; font-weight: bold; margin: 0; line-height: 1.2; color: #111;">📦 สรุปยอดสั่งจองเสื้อ</h1>
+                <h2 style="font-size: 18px; font-weight: normal; margin: 5px 0 0 0;">งานวันสหกรณ์แห่งชาติ ประจำปี พ.ศ. 2569</h2>
+            </div>
+
+            <!-- Filter Badge -->
+            <div style="text-align: center; margin-bottom: 15px;">
+                <span style="display: inline-block; padding: 8px 20px; border-radius: 30px; font-size: 16px; font-weight: 600; color: white; background-color: ${filterLabelColor};">
+                    ${filterLabel}
+                </span>
+            </div>
+
+            <div style="border-bottom: 3px solid #22c55e; margin-bottom: 20px;"></div>
+
+            <!-- Color Cards Section -->
+            <div style="margin-bottom: 25px;">
+                <h3 style="font-size: 18px; font-weight: bold; color: #374151; margin-bottom: 15px;">👕 ยอดเสื้อแยกตามสีทีม</h3>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    ${colorCardsHTML}
+                </div>
+            </div>
+
+            <!-- Summary Table by Size -->
+            <div style="margin-bottom: 25px;">
+                <h3 style="font-size: 18px; font-weight: bold; color: #374151; margin-bottom: 15px;">📊 ตารางสรุปแยกตามไซส์</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="background-color: #f3f4f6;">
+                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: left; font-weight: 700;">ไซส์</th>
+                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #dcfce7; color: #166534;">🟢 เขียว</th>
+                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #dbeafe; color: #1e40af;">🔵 ฟ้า</th>
+                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #f3e8ff; color: #6b21a8;">🟣 ม่วง</th>
+                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #fce7f3; color: #9d174d;">💗 ชมพู</th>
+                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #1f2937; color: white;">รวม</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${summaryTableHTML}
+                        <tr style="background-color: #f9fafb; font-weight: 700;">
+                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb;">รวมทั้งหมด</td>
+                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; color: #166534;">${sizesByColor.green.total}</td>
+                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; color: #1e40af;">${sizesByColor.blue.total}</td>
+                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; color: #6b21a8;">${sizesByColor.purple.total}</td>
+                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; color: #9d174d;">${sizesByColor.pink.total}</td>
+                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; background-color: #1f2937; color: white; font-size: 16px;">${grandTotal}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Grand Total Box -->
+            <div style="margin-bottom: 20px;">
+                <div style="background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);">
+                    <div style="font-size: 18px; color: rgba(255,255,255,0.9); margin-bottom: 5px;">ยอดรวมเสื้อทั้งหมด</div>
+                    <div style="font-size: 48px; font-weight: 900; color: white; line-height: 1;">${grandTotal}</div>
+                    <div style="font-size: 16px; color: rgba(255,255,255,0.9); margin-top: 5px;">ตัว</div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="margin-top: auto; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b7280;">
+                    <div>
+                        <p style="margin: 0;">สำนักงานสหกรณ์จังหวัดระยอง</p>
+                        <p style="margin: 2px 0 0 0;">โทร: 038-694-113</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0;">วันที่พิมพ์: ${dateStr}</p>
+                        <p style="margin: 2px 0 0 0;">เวลา: ${timeStr}</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    // Create temporary container
+    const container = document.createElement('div');
+    container.innerHTML = pdfContent;
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.zIndex = '9999';
+    container.style.backgroundColor = 'white';
+    container.style.width = '794px';
+    container.style.boxSizing = 'border-box';
+
+    // Add loading indicator
+    const loadingMsg = document.createElement('div');
+    loadingMsg.innerHTML = '⏳ กำลังสร้างไฟล์ PDF สรุปยอดเสื้อ...';
+    loadingMsg.style.position = 'fixed';
+    loadingMsg.style.top = '50%';
+    loadingMsg.style.left = '50%';
+    loadingMsg.style.transform = 'translate(-50%, -50%)';
+    loadingMsg.style.background = 'rgba(0,0,0,0.8)';
+    loadingMsg.style.color = 'white';
+    loadingMsg.style.padding = '20px 40px';
+    loadingMsg.style.borderRadius = '10px';
+    loadingMsg.style.zIndex = '10000';
+    loadingMsg.style.fontSize = '20px';
+    loadingMsg.style.fontFamily = "'Kanit', sans-serif";
+
+    document.body.appendChild(container);
+    document.body.appendChild(loadingMsg);
+
+    // PDF filename based on filter
+    const filterNames = { all: 'ทั้งหมด', paid: 'ชำระแล้ว', pending: 'รอชำระ' };
+    const filename = `สรุปยอดเสื้อ_${filterNames[filterType]}_${dateStr.replace(/\//g, '-')}.pdf`;
+
+    // PDF options
+    const opt = {
+        margin: [0, 0, 0, 0],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+            scale: 2,
+            useCORS: true,
+            letterRendering: true,
+            logging: false,
+            windowWidth: 794,
+            scrollX: 0,
+            scrollY: 0,
+            x: 0,
+            y: 0
+        },
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
+        },
+        pagebreak: { mode: 'avoid-all' }
+    };
+
+    // Wait for fonts and generate PDF
+    document.fonts.ready.then(() => {
+        return new Promise(resolve => setTimeout(resolve, 500));
+    }).then(() => {
+        const element = container.firstElementChild;
+        return html2pdf().set(opt).from(element).save();
+    }).then(() => {
+        document.body.removeChild(container);
+        document.body.removeChild(loadingMsg);
+        showToast('สร้าง PDF สรุปยอดเสื้อสำเร็จ!', 'success');
+    }).catch(err => {
+        console.error('PDF Error:', err);
+        showToast('เกิดข้อผิดพลาดในการสร้าง PDF', 'error');
+        if (document.body.contains(container)) document.body.removeChild(container);
+        if (document.body.contains(loadingMsg)) document.body.removeChild(loadingMsg);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', init);
