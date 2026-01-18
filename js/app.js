@@ -1013,7 +1013,7 @@ function generateShirtSummaryPDF(filterType = 'all') {
     const dateStr = `${now.getDate()}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear() + 543}`;
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
 
-    // Generate color cards HTML
+    // Generate color cards HTML - Compact design
     let colorCardsHTML = '';
     colors.forEach(c => {
         const data = sizesByColor[c.key];
@@ -1021,115 +1021,115 @@ function generateShirtSummaryPDF(filterType = 'all') {
         sizeKeys.forEach((key, idx) => {
             if (data[key] > 0) {
                 sizesHTML += `
-                    <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: rgba(255,255,255,0.7); border-radius: 4px; margin-bottom: 4px;">
+                    <div style="display: flex; justify-content: space-between; padding: 3px 6px; background: rgba(255,255,255,0.7); border-radius: 3px; margin-bottom: 2px; font-size: 11px;">
                         <span style="font-weight: 600;">${sizeLabels[idx]}</span>
-                        <span style="font-weight: 700;">${data[key]} ตัว</span>
+                        <span style="font-weight: 700;">${data[key]}</span>
                     </div>
                 `;
             }
         });
 
         if (data.total === 0) {
-            sizesHTML = `<p style="text-align: center; color: #999; padding: 20px;">ไม่มียอดจอง</p>`;
+            sizesHTML = `<p style="text-align: center; color: #999; padding: 10px; font-size: 11px;">-</p>`;
         }
 
         colorCardsHTML += `
-            <div style="background: ${c.bgColor}; border: 2px solid ${c.borderColor}; border-radius: 10px; padding: 12px; flex: 1; min-width: 140px; max-width: 170px;">
-                <div style="text-align: center; margin-bottom: 12px;">
-                    <span style="font-size: 28px;">${c.emoji}</span>
-                    <h3 style="font-size: 18px; font-weight: 700; color: ${c.textColor}; margin: 4px 0 0 0;">${c.name}</h3>
+            <div style="background: ${c.bgColor}; border: 2px solid ${c.borderColor}; border-radius: 8px; padding: 10px; width: 23%; box-sizing: border-box;">
+                <div style="text-align: center; margin-bottom: 8px;">
+                    <span style="font-size: 20px;">${c.emoji}</span>
+                    <div style="font-size: 13px; font-weight: 700; color: ${c.textColor}; margin-top: 2px;">${c.name}</div>
                 </div>
-                <div style="font-size: 13px;">
+                <div style="min-height: 60px;">
                     ${sizesHTML}
                 </div>
-                <div style="margin-top: 12px; padding-top: 12px; border-top: 2px dashed ${c.borderColor}; text-align: center;">
-                    <span style="font-size: 14px; color: ${c.textColor};">รวม</span>
-                    <div style="font-size: 26px; font-weight: 900; color: ${c.textColor};">${data.total}</div>
-                    <span style="font-size: 12px; color: ${c.textColor};">ตัว</span>
+                <div style="margin-top: 8px; padding-top: 8px; border-top: 2px dashed ${c.borderColor}; text-align: center;">
+                    <div style="font-size: 11px; color: ${c.textColor};">รวม</div>
+                    <div style="font-size: 22px; font-weight: 900; color: ${c.textColor}; line-height: 1;">${data.total}</div>
+                    <div style="font-size: 10px; color: ${c.textColor};">ตัว</div>
                 </div>
             </div>
         `;
     });
 
-    // Generate summary table HTML (by size)
+    // Generate summary table HTML (by size) - Compact design
     let summaryTableHTML = '';
     sizeKeys.forEach((key, idx) => {
         const total = overallTotals[key];
         if (total > 0) {
             summaryTableHTML += `
                 <tr>
-                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; font-weight: 600;">${sizeLabels[idx]}</td>
-                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center;">${sizesByColor.green[key]}</td>
-                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center;">${sizesByColor.blue[key]}</td>
-                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center;">${sizesByColor.purple[key]}</td>
-                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center;">${sizesByColor.pink[key]}</td>
-                    <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background: #f9fafb;">${total}</td>
+                    <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600; font-size: 12px;">${sizeLabels[idx]}</td>
+                    <td style="padding: 6px 10px; border: 1px solid #e5e7eb; text-align: center; font-size: 12px;">${sizesByColor.green[key]}</td>
+                    <td style="padding: 6px 10px; border: 1px solid #e5e7eb; text-align: center; font-size: 12px;">${sizesByColor.blue[key]}</td>
+                    <td style="padding: 6px 10px; border: 1px solid #e5e7eb; text-align: center; font-size: 12px;">${sizesByColor.purple[key]}</td>
+                    <td style="padding: 6px 10px; border: 1px solid #e5e7eb; text-align: center; font-size: 12px;">${sizesByColor.pink[key]}</td>
+                    <td style="padding: 6px 10px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background: #f9fafb; font-size: 12px;">${total}</td>
                 </tr>
             `;
         }
     });
 
-    // PDF Content
+    // PDF Content - Compact and beautiful layout
     const pdfContent = `
-        <div id="pdf-content" style="font-family: 'Kanit', sans-serif; color: #000; padding: 40px; background: white; width: 794px; min-height: 1120px; box-sizing: border-box; display: flex; flex-direction: column;">
+        <div id="pdf-content" style="font-family: 'Kanit', sans-serif; color: #000; padding: 25px 30px; background: white; width: 794px; min-height: 1120px; box-sizing: border-box; display: flex; flex-direction: column;">
             
             <!-- Header -->
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="font-size: 26px; font-weight: bold; margin: 0; line-height: 1.2; color: #111;">📦 สรุปยอดสั่งจองเสื้อ</h1>
-                <h2 style="font-size: 18px; font-weight: normal; margin: 5px 0 0 0;">งานวันสหกรณ์แห่งชาติ ประจำปี พ.ศ. 2569</h2>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h1 style="font-size: 22px; font-weight: bold; margin: 0; line-height: 1.2; color: #111;">📦 สรุปยอดสั่งจองเสื้อ</h1>
+                <h2 style="font-size: 14px; font-weight: normal; margin: 3px 0 0 0; color: #666;">งานวันสหกรณ์แห่งชาติ ประจำปี พ.ศ. 2569</h2>
             </div>
 
             <!-- Filter Badge -->
-            <div style="text-align: center; margin-bottom: 15px;">
-                <span style="display: inline-block; padding: 8px 20px; border-radius: 30px; font-size: 16px; font-weight: 600; color: white; background-color: ${filterLabelColor};">
+            <div style="text-align: center; margin-bottom: 12px;">
+                <span style="display: inline-block; padding: 5px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; color: white; background-color: ${filterLabelColor};">
                     ${filterLabel}
                 </span>
             </div>
 
-            <div style="border-bottom: 3px solid #22c55e; margin-bottom: 20px;"></div>
+            <div style="border-bottom: 2px solid #22c55e; margin-bottom: 15px;"></div>
 
             <!-- Color Cards Section -->
-            <div style="margin-bottom: 25px;">
-                <h3 style="font-size: 18px; font-weight: bold; color: #374151; margin-bottom: 15px;">👕 ยอดเสื้อแยกตามสีทีม</h3>
-                <div style="display: flex; gap: 10px; flex-wrap: nowrap; justify-content: space-between;">
+            <div style="margin-bottom: 15px;">
+                <h3 style="font-size: 14px; font-weight: bold; color: #374151; margin-bottom: 10px;">👕 ยอดเสื้อแยกตามสีทีม</h3>
+                <div style="display: flex; gap: 8px; justify-content: space-between;">
                     ${colorCardsHTML}
                 </div>
             </div>
 
-            <!-- Summary Table by Size - Add page break styling for better pagination -->
-            <div style="margin-bottom: 25px; page-break-before: auto; page-break-inside: avoid; padding-top: 20px;">
-                <h3 style="font-size: 18px; font-weight: bold; color: #374151; margin-bottom: 15px;">📊 ตารางสรุปแยกตามไซส์</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <!-- Summary Table by Size -->
+            <div style="margin-bottom: 15px;">
+                <h3 style="font-size: 14px; font-weight: bold; color: #374151; margin-bottom: 10px;">📊 ตารางสรุปแยกตามไซส์</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                     <thead>
                         <tr style="background-color: #f3f4f6;">
-                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: left; font-weight: 700;">ไซส์</th>
-                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #dcfce7; color: #166534;">🟢 เขียว</th>
-                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #dbeafe; color: #1e40af;">🔵 ฟ้า</th>
-                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #f3e8ff; color: #6b21a8;">🟣 ม่วง</th>
-                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #fce7f3; color: #9d174d;">💗 ชมพู</th>
-                            <th style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #1f2937; color: white;">รวม</th>
+                            <th style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: left; font-weight: 700;">ไซส์</th>
+                            <th style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #dcfce7; color: #166534;">🟢 เขียว</th>
+                            <th style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #dbeafe; color: #1e40af;">🔵 ฟ้า</th>
+                            <th style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #f3e8ff; color: #6b21a8;">🟣 ม่วง</th>
+                            <th style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #fce7f3; color: #9d174d;">💗 ชมพู</th>
+                            <th style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; font-weight: 700; background-color: #1f2937; color: white;">รวม</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${summaryTableHTML}
                         <tr style="background-color: #f9fafb; font-weight: 700;">
-                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb;">รวมทั้งหมด</td>
-                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; color: #166534;">${sizesByColor.green.total}</td>
-                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; color: #1e40af;">${sizesByColor.blue.total}</td>
-                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; color: #6b21a8;">${sizesByColor.purple.total}</td>
-                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; color: #9d174d;">${sizesByColor.pink.total}</td>
-                            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: center; background-color: #1f2937; color: white; font-size: 16px;">${grandTotal}</td>
+                            <td style="padding: 8px 10px; border: 1px solid #e5e7eb; font-size: 12px;">รวมทั้งหมด</td>
+                            <td style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; color: #166534; font-size: 12px;">${sizesByColor.green.total}</td>
+                            <td style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; color: #1e40af; font-size: 12px;">${sizesByColor.blue.total}</td>
+                            <td style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; color: #6b21a8; font-size: 12px;">${sizesByColor.purple.total}</td>
+                            <td style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; color: #9d174d; font-size: 12px;">${sizesByColor.pink.total}</td>
+                            <td style="padding: 8px 10px; border: 1px solid #e5e7eb; text-align: center; background-color: #1f2937; color: white; font-size: 14px;">${grandTotal}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
             <!-- Grand Total Box -->
-            <div style="margin-bottom: 20px;">
-                <div style="background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);">
-                    <div style="font-size: 18px; color: rgba(255,255,255,0.9); margin-bottom: 5px;">ยอดรวมเสื้อทั้งหมด</div>
-                    <div style="font-size: 48px; font-weight: 900; color: white; line-height: 1;">${grandTotal}</div>
-                    <div style="font-size: 16px; color: rgba(255,255,255,0.9); margin-top: 5px;">ตัว</div>
+            <div style="margin-bottom: 15px;">
+                <div style="background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 10px; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);">
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 3px;">ยอดรวมเสื้อทั้งหมด</div>
+                    <div style="font-size: 40px; font-weight: 900; color: white; line-height: 1;">${grandTotal}</div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-top: 3px;">ตัว</div>
                 </div>
             </div>
 
