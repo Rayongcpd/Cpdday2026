@@ -1034,7 +1034,7 @@ function generateShirtSummaryPDF(filterType = 'all') {
         }
 
         colorCardsHTML += `
-            <div style="background: ${c.bgColor}; border: 2px solid ${c.borderColor}; border-radius: 12px; padding: 16px; flex: 1; min-width: 160px;">
+            <div style="background: ${c.bgColor}; border: 2px solid ${c.borderColor}; border-radius: 10px; padding: 12px; flex: 1; min-width: 140px; max-width: 170px;">
                 <div style="text-align: center; margin-bottom: 12px;">
                     <span style="font-size: 28px;">${c.emoji}</span>
                     <h3 style="font-size: 18px; font-weight: 700; color: ${c.textColor}; margin: 4px 0 0 0;">${c.name}</h3>
@@ -1091,7 +1091,7 @@ function generateShirtSummaryPDF(filterType = 'all') {
             <!-- Color Cards Section -->
             <div style="margin-bottom: 25px;">
                 <h3 style="font-size: 18px; font-weight: bold; color: #374151; margin-bottom: 15px;">👕 ยอดเสื้อแยกตามสีทีม</h3>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 10px; flex-wrap: nowrap; justify-content: space-between;">
                     ${colorCardsHTML}
                 </div>
             </div>
@@ -1183,9 +1183,9 @@ function generateShirtSummaryPDF(filterType = 'all') {
     const filterNames = { all: 'ทั้งหมด', paid: 'ชำระแล้ว', pending: 'รอชำระ' };
     const filename = `สรุปยอดเสื้อ_${filterNames[filterType]}_${dateStr.replace(/\//g, '-')}.pdf`;
 
-    // PDF options - Add top margin for page 2 visibility
+    // PDF options - Adjusted margins for better layout
     const opt = {
-        margin: [15, 10, 15, 10], // [top, left, bottom, right] in mm - Added top margin for page 2
+        margin: [10, 5, 10, 5], // [top, left, bottom, right] in mm - Reduced for full content visibility
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
