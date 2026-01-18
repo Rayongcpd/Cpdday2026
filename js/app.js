@@ -1041,9 +1041,9 @@ function generateShirtSummaryPDF(filterType = 'all') {
         `;
     }).join('');
 
-    // Final PDF HTML - Clean A4 Layout (595px width for 72dpi)
+    // Final PDF HTML - Full width A4 Layout
     const pdfContent = `
-        <div style="font-family: 'Kanit', sans-serif; width: 555px; padding: 20px; background: #fff; color: #333; box-sizing: border-box;">
+        <div style="font-family: 'Kanit', sans-serif; width: 700px; padding: 25px; background: #fff; color: #333; box-sizing: border-box;">
             
             <!-- HEADER -->
             <div style="text-align: center; padding-bottom: 15px; border-bottom: 3px solid #22c55e; margin-bottom: 20px;">
@@ -1124,9 +1124,9 @@ function generateShirtSummaryPDF(filterType = 'all') {
     const filterNames = { all: 'ทั้งหมด', paid: 'ชำระแล้ว', pending: 'รอชำระ' };
     const filename = `สรุปยอดเสื้อ_${filterNames[filterType]}_${dateStr.replace(/\//g, '-')}.pdf`;
 
-    // PDF Options - Optimized for A4
+    // PDF Options - Full width A4
     const opt = {
-        margin: [10, 20, 10, 20], // mm: top, left, bottom, right (left/right 20mm for safety)
+        margin: [10, 8, 10, 8], // mm: top, left, bottom, right (minimal margins for full width)
         filename: filename,
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: {
