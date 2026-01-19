@@ -184,6 +184,12 @@
                                 <input type="number" id="shirt7XL" min="0" placeholder="-"
                                     class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-purple-600">ไซร์พิเศษ</label>
+                                <p class="text-xs text-gray-500 mb-1">อก 63" / ยาว 25"</p>
+                                <input type="number" id="shirtSpecial" min="0" placeholder="-"
+                                    class="w-full px-3 py-2 border-2 border-purple-300 rounded-lg bg-purple-50">
+                            </div>
                         </div>
                     </div>
 
@@ -366,7 +372,7 @@
                                 <option value="pending">⏳ รอชำระ</option>
                             </select>
                         </div>
-                        <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-2">
+                        <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
                             <div class="bg-gray-100 rounded-lg p-3 text-center border border-gray-200">
                                 <p class="text-sm text-gray-600 font-semibold">SS</p>
                                 <p class="text-xl font-bold text-gray-800" id="totalSS">0</p>
@@ -411,6 +417,10 @@
                                 <p class="text-sm text-gray-600 font-semibold">7XL</p>
                                 <p class="text-xl font-bold text-gray-800" id="total7XL">0</p>
                             </div>
+                            <div class="bg-purple-100 rounded-lg p-3 text-center border border-purple-200">
+                                <p class="text-sm text-purple-600 font-semibold">พิเศษ</p>
+                                <p class="text-xl font-bold text-purple-800" id="totalSpecial">0</p>
+                            </div>
                         </div>
 
                         <div class="mb-6 mt-6">
@@ -431,6 +441,7 @@
                                             <th class="border px-2 py-2 text-center">5XL</th>
                                             <th class="border px-2 py-2 text-center">6XL</th>
                                             <th class="border px-2 py-2 text-center">7XL</th>
+                                            <th class="border px-2 py-2 text-center text-purple-600">พิเศษ</th>
                                             <th class="border px-2 py-2 text-center font-bold">รวม</th>
                                         </tr>
                                     </thead>
@@ -448,6 +459,8 @@
                                             <td class="border px-2 py-2 text-center" id="green5XL">0</td>
                                             <td class="border px-2 py-2 text-center" id="green6XL">0</td>
                                             <td class="border px-2 py-2 text-center" id="green7XL">0</td>
+                                            <td class="border px-2 py-2 text-center text-purple-700" id="greenSpecial">0
+                                            </td>
                                             <td class="border px-2 py-2 text-center font-bold text-green-700"
                                                 id="greenTotal">0</td>
                                         </tr>
@@ -464,6 +477,8 @@
                                             <td class="border px-2 py-2 text-center" id="blue5XL">0</td>
                                             <td class="border px-2 py-2 text-center" id="blue6XL">0</td>
                                             <td class="border px-2 py-2 text-center" id="blue7XL">0</td>
+                                            <td class="border px-2 py-2 text-center text-purple-700" id="blueSpecial">0
+                                            </td>
                                             <td class="border px-2 py-2 text-center font-bold text-blue-700"
                                                 id="blueTotal">0</td>
                                         </tr>
@@ -480,6 +495,8 @@
                                             <td class="border px-2 py-2 text-center" id="purple5XL">0</td>
                                             <td class="border px-2 py-2 text-center" id="purple6XL">0</td>
                                             <td class="border px-2 py-2 text-center" id="purple7XL">0</td>
+                                            <td class="border px-2 py-2 text-center text-purple-700" id="purpleSpecial">
+                                                0</td>
                                             <td class="border px-2 py-2 text-center font-bold text-purple-700"
                                                 id="purpleTotal">0</td>
                                         </tr>
@@ -496,6 +513,8 @@
                                             <td class="border px-2 py-2 text-center" id="pink5XL">0</td>
                                             <td class="border px-2 py-2 text-center" id="pink6XL">0</td>
                                             <td class="border px-2 py-2 text-center" id="pink7XL">0</td>
+                                            <td class="border px-2 py-2 text-center text-purple-700" id="pinkSpecial">0
+                                            </td>
                                             <td class="border px-2 py-2 text-center font-bold text-pink-700"
                                                 id="pinkTotal">0</td>
                                         </tr>

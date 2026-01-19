@@ -196,11 +196,12 @@ async function previewBooking() {
     const shirt5XL = parseInt(document.getElementById('shirt5XL').value) || 0;
     const shirt6XL = parseInt(document.getElementById('shirt6XL').value) || 0;
     const shirt7XL = parseInt(document.getElementById('shirt7XL').value) || 0;
+    const shirtSpecial = parseInt(document.getElementById('shirtSpecial').value) || 0;
     const flowerCount = parseInt(document.getElementById('flowerCount').value) || 0;
     const tableCount = parseInt(document.getElementById('tableCount').value) || 0;
     const sponsorAmount = parseInt(document.getElementById('sponsorAmount').value) || 0;
 
-    const totalShirts = shirtSS + shirtS + shirtM + shirtL + shirtXL + shirt2XL + shirt3XL + shirt4XL + shirt5XL + shirt6XL + shirt7XL;
+    const totalShirts = shirtSS + shirtS + shirtM + shirtL + shirtXL + shirt2XL + shirt3XL + shirt4XL + shirt5XL + shirt6XL + shirt7XL + shirtSpecial;
     const shirtCost = totalShirts * 300;
     const flowerCost = flowerCount * 600;
     const tableCost = tableCount * 3000;
@@ -224,6 +225,7 @@ async function previewBooking() {
             ${shirt5XL > 0 ? `<p>• 5XL: ${shirt5XL} ตัว</p>` : ''}
             ${shirt6XL > 0 ? `<p>• 6XL: ${shirt6XL} ตัว</p>` : ''}
             ${shirt7XL > 0 ? `<p>• 7XL: ${shirt7XL} ตัว</p>` : ''}
+            ${shirtSpecial > 0 ? `<p>• ไซร์พิเศษ: ${shirtSpecial} ตัว</p>` : ''}
             <p class="text-right font-medium">ค่าเสื้อ: ${shirtCost.toLocaleString()} บาท</p>
             <hr class="my-3">
             <p><strong>พานพุ่ม:</strong> ${flowerCount} พาน</p>
@@ -259,11 +261,12 @@ async function confirmBooking() {
     const shirt5XL = parseInt(document.getElementById('shirt5XL').value) || 0;
     const shirt6XL = parseInt(document.getElementById('shirt6XL').value) || 0;
     const shirt7XL = parseInt(document.getElementById('shirt7XL').value) || 0;
+    const shirtSpecial = parseInt(document.getElementById('shirtSpecial').value) || 0;
     const flowerCount = parseInt(document.getElementById('flowerCount').value) || 0;
     const tableCount = parseInt(document.getElementById('tableCount').value) || 0;
     const sponsorAmount = parseInt(document.getElementById('sponsorAmount').value) || 0;
 
-    const totalShirts = shirtSS + shirtS + shirtM + shirtL + shirtXL + shirt2XL + shirt3XL + shirt4XL + shirt5XL + shirt6XL + shirt7XL;
+    const totalShirts = shirtSS + shirtS + shirtM + shirtL + shirtXL + shirt2XL + shirt3XL + shirt4XL + shirt5XL + shirt6XL + shirt7XL + shirtSpecial;
     const totalAmount = (totalShirts * 300) + (flowerCount * 600) + (tableCount * 3000) + sponsorAmount;
 
     let bookingId = editingBookingId;
@@ -275,7 +278,7 @@ async function confirmBooking() {
     const bookingData = {
         id: bookingId, pin: bookingPin, coop_name: coopName, coop_color: selectedColor,
         shirt_ss: shirtSS, shirt_s: shirtS, shirt_m: shirtM, shirt_l: shirtL, shirt_xl: shirtXL,
-        shirt_2xl: shirt2XL, shirt_3xl: shirt3XL, shirt_4xl: shirt4XL, shirt_5xl: shirt5XL, shirt_6xl: shirt6XL, shirt_7xl: shirt7XL,
+        shirt_2xl: shirt2XL, shirt_3xl: shirt3XL, shirt_4xl: shirt4XL, shirt_5xl: shirt5XL, shirt_6xl: shirt6XL, shirt_7xl: shirt7XL, shirt_special: shirtSpecial,
         flower_count: flowerCount, table_count: tableCount, sponsor_amount: sponsorAmount, total_amount: totalAmount, payment_status: 'รอชำระ'
     };
 
@@ -297,7 +300,7 @@ function resetForm() {
     document.getElementById('coopName').value = '';
     const pinInput = document.getElementById('bookingPin');
     pinInput.value = ''; pinInput.disabled = false; pinInput.classList.remove('bg-gray-100');
-    ['shirtSS', 'shirtS', 'shirtM', 'shirtL', 'shirtXL', 'shirt2XL', 'shirt3XL', 'shirt4XL', 'shirt5XL', 'shirt6XL', 'shirt7XL', 'flowerCount', 'tableCount', 'sponsorAmount'].forEach(id => document.getElementById(id).value = '');
+    ['shirtSS', 'shirtS', 'shirtM', 'shirtL', 'shirtXL', 'shirt2XL', 'shirt3XL', 'shirt4XL', 'shirt5XL', 'shirt6XL', 'shirt7XL', 'shirtSpecial', 'flowerCount', 'tableCount', 'sponsorAmount'].forEach(id => document.getElementById(id).value = '');
     editingBookingId = null; selectedColor = '';
     isPhoneVerified = false;  // Reset phone verification when form is cleared
     document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('ring-4', 'ring-indigo-500', 'bg-indigo-50'));
@@ -338,6 +341,7 @@ function proceedToEdit() {
     document.getElementById('shirt5XL').value = currentPaymentCoop.shirt_5xl || '';
     document.getElementById('shirt6XL').value = currentPaymentCoop.shirt_6xl || '';
     document.getElementById('shirt7XL').value = currentPaymentCoop.shirt_7xl || '';
+    document.getElementById('shirtSpecial').value = currentPaymentCoop.shirt_special || '';
     document.getElementById('flowerCount').value = currentPaymentCoop.flower_count || '';
     document.getElementById('tableCount').value = currentPaymentCoop.table_count || '';
     document.getElementById('sponsorAmount').value = currentPaymentCoop.sponsor_amount || '';
@@ -402,7 +406,7 @@ function loadPaymentInfo(coopId) { if (!coopId && currentPaymentCoop) coopId = c
 
 function renderPaymentInfo() {
     if (!currentPaymentCoop) return;
-    const totalShirts = (currentPaymentCoop.shirt_ss || 0) + (currentPaymentCoop.shirt_s || 0) + (currentPaymentCoop.shirt_m || 0) + (currentPaymentCoop.shirt_l || 0) + (currentPaymentCoop.shirt_xl || 0) + (currentPaymentCoop.shirt_2xl || 0) + (currentPaymentCoop.shirt_3xl || 0) + (currentPaymentCoop.shirt_4xl || 0) + (currentPaymentCoop.shirt_5xl || 0) + (currentPaymentCoop.shirt_6xl || 0) + (currentPaymentCoop.shirt_7xl || 0);
+    const totalShirts = (currentPaymentCoop.shirt_ss || 0) + (currentPaymentCoop.shirt_s || 0) + (currentPaymentCoop.shirt_m || 0) + (currentPaymentCoop.shirt_l || 0) + (currentPaymentCoop.shirt_xl || 0) + (currentPaymentCoop.shirt_2xl || 0) + (currentPaymentCoop.shirt_3xl || 0) + (currentPaymentCoop.shirt_4xl || 0) + (currentPaymentCoop.shirt_5xl || 0) + (currentPaymentCoop.shirt_6xl || 0) + (currentPaymentCoop.shirt_7xl || 0) + (currentPaymentCoop.shirt_special || 0);
     const colorNameFull = { 'green': '🟢 สีเขียว', 'blue': '🔵 สีฟ้า', 'purple': '🟣 สีม่วง', 'pink': '💗 สีชมพู' };
     let shirtDetailsHTML = '';
     if (currentPaymentCoop.shirt_ss > 0) shirtDetailsHTML += `<p class="ml-4">• SS: ${currentPaymentCoop.shirt_ss} ตัว</p>`;
@@ -416,6 +420,7 @@ function renderPaymentInfo() {
     if (currentPaymentCoop.shirt_5xl > 0) shirtDetailsHTML += `<p class="ml-4">• 5XL: ${currentPaymentCoop.shirt_5xl} ตัว</p>`;
     if (currentPaymentCoop.shirt_6xl > 0) shirtDetailsHTML += `<p class="ml-4">• 6XL: ${currentPaymentCoop.shirt_6xl} ตัว</p>`;
     if (currentPaymentCoop.shirt_7xl > 0) shirtDetailsHTML += `<p class="ml-4">• 7XL: ${currentPaymentCoop.shirt_7xl} ตัว</p>`;
+    if (currentPaymentCoop.shirt_special > 0) shirtDetailsHTML += `<p class="ml-4 text-purple-600">• ไซร์พิเศษ: ${currentPaymentCoop.shirt_special} ตัว</p>`;
     const sponsorAmount = currentPaymentCoop.sponsor_amount || 0;
     let detailsHTML = `<p class="text-xs text-gray-500 mb-2">Booking ID: ${currentPaymentCoop.id}</p><p><strong>สหกรณ์:</strong> ${currentPaymentCoop.coop_name}</p><p><strong>สีทีม:</strong> ${colorNameFull[currentPaymentCoop.coop_color]}</p><p><strong>เสื้อกีฬา:</strong> รวม ${totalShirts} ตัว × 300 บาท = ${(totalShirts * 300).toLocaleString()} บาท</p>${shirtDetailsHTML}<p><strong>พานพุ่ม:</strong> ${currentPaymentCoop.flower_count} พาน × 600 บาท = ${(currentPaymentCoop.flower_count * 600).toLocaleString()} บาท</p><p><strong>โต๊ะจีน:</strong> ${currentPaymentCoop.table_count} โต๊ะ × 3,000 บาท = ${(currentPaymentCoop.table_count * 3000).toLocaleString()} บาท</p>${sponsorAmount > 0 ? `<p><strong>เงินสนับสนุน:</strong> <span class="text-green-600">+${sponsorAmount.toLocaleString()} บาท</span></p>` : ''}`;
     document.getElementById('modalPaymentDetails').innerHTML = detailsHTML;
@@ -492,7 +497,7 @@ function updateSummaryTab() {
 
     allBookings.forEach(booking => {
         const normalizedName = normalizeCoopName(booking.coop_name);
-        const bookingShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0);
+        const bookingShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0) + (booking.shirt_special || 0);
 
         // All Bookings Summary
         window.summaryData.all.coops.add(normalizedName);
@@ -552,7 +557,7 @@ function updateSummaryTab() {
     if (paginatedBookings.length === 0) { tbody.innerHTML = `<tr><td colspan="11" class="text-center py-4 text-gray-500">ไม่พบข้อมูล</td></tr>`; return; }
     const colorNameFull = { 'green': '🟢 สีเขียว', 'blue': '🔵 สีฟ้า', 'purple': '🟣 สีม่วง', 'pink': '💗 สีชมพู' };
     paginatedBookings.forEach(booking => {
-        const totalShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0);
+        const totalShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0) + (booking.shirt_special || 0);
         const sponsorAmount = booking.sponsor_amount || 0;
         let statusColor = 'bg-yellow-100 text-yellow-700'; if (booking.payment_status === 'ชำระแล้ว') statusColor = 'bg-green-100 text-green-700'; else if (booking.payment_status === 'รอตรวจสอบ') statusColor = 'bg-blue-100 text-blue-700';
         const distributionStatus = booking.distribution_status || 'ยังไม่แจก'; const isDistributed = distributionStatus === 'แจกแล้ว'; const distributionBadgeColor = isDistributed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'; const distributionIcon = isDistributed ? '✅' : '⏳';
@@ -595,14 +600,14 @@ function updateShirtSummary() {
     const filterValue = document.getElementById('shirtSummaryFilter')?.value || 'all';
 
     // Size Counters
-    let countSS = 0, countS = 0, countM = 0, countL = 0, countXL = 0, count2XL = 0, count3XL = 0, count4XL = 0, count5XL = 0, count6XL = 0, count7XL = 0;
+    let countSS = 0, countS = 0, countM = 0, countL = 0, countXL = 0, count2XL = 0, count3XL = 0, count4XL = 0, count5XL = 0, count6XL = 0, count7XL = 0, countSpecial = 0;
 
     // Size Counters by Color
     const sizesByColor = {
-        green: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 },
-        blue: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 },
-        purple: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 },
-        pink: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0 }
+        green: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0 },
+        blue: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0 },
+        purple: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0 },
+        pink: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0 }
     };
 
     // Filter bookings based on dropdown selection
@@ -627,6 +632,7 @@ function updateShirtSummary() {
         count5XL += booking.shirt_5xl || 0;
         count6XL += booking.shirt_6xl || 0;
         count7XL += booking.shirt_7xl || 0;
+        countSpecial += booking.shirt_special || 0;
 
         // Accumulate Sizes by Color
         const color = booking.coop_color;
@@ -642,6 +648,7 @@ function updateShirtSummary() {
             sizesByColor[color]['5xl'] += booking.shirt_5xl || 0;
             sizesByColor[color]['6xl'] += booking.shirt_6xl || 0;
             sizesByColor[color]['7xl'] += booking.shirt_7xl || 0;
+            sizesByColor[color].special += booking.shirt_special || 0;
         }
     });
 
@@ -657,11 +664,12 @@ function updateShirtSummary() {
     document.getElementById('total5XL').textContent = count5XL;
     document.getElementById('total6XL').textContent = count6XL;
     document.getElementById('total7XL').textContent = count7XL;
+    document.getElementById('totalSpecial').textContent = countSpecial;
 
     // Update Sizes by Color Table
     const colors = ['green', 'blue', 'purple', 'pink'];
-    const sizes = ['SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL'];
-    const sizeKeys = ['ss', 's', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl'];
+    const sizes = ['SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL', 'Special'];
+    const sizeKeys = ['ss', 's', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl', 'special'];
 
     colors.forEach(color => {
         let colorTotal = 0;
@@ -680,8 +688,8 @@ function updateShirtSummary() {
 
 function showSizeDetail(id) {
     const booking = allBookings.find(b => b.id == id); if (!booking) return;
-    const totalShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0);
-    const html = `<div class="space-y-3"><div><p class="font-bold text-gray-700">${booking.coop_name}</p></div><div class="grid grid-cols-3 gap-2 text-sm"><div class="bg-gray-50 p-2 rounded flex justify-between"><span>SS:</span> <span class="font-bold">${booking.shirt_ss || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>S:</span> <span class="font-bold">${booking.shirt_s || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>M:</span> <span class="font-bold">${booking.shirt_m || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>L:</span> <span class="font-bold">${booking.shirt_l || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>XL:</span> <span class="font-bold">${booking.shirt_xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>2XL:</span> <span class="font-bold">${booking.shirt_2xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>3XL:</span> <span class="font-bold">${booking.shirt_3xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>4XL:</span> <span class="font-bold">${booking.shirt_4xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>5XL:</span> <span class="font-bold">${booking.shirt_5xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>6XL:</span> <span class="font-bold">${booking.shirt_6xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>7XL:</span> <span class="font-bold">${booking.shirt_7xl || 0}</span></div></div><div class="mt-3 pt-3 border-t flex justify-between font-bold text-indigo-600"><span>รวมทั้งหมด:</span><span>${totalShirts} ตัว</span></div></div>`;
+    const totalShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0) + (booking.shirt_special || 0);
+    const html = `<div class="space-y-3"><div><p class="font-bold text-gray-700">${booking.coop_name}</p></div><div class="grid grid-cols-3 gap-2 text-sm"><div class="bg-gray-50 p-2 rounded flex justify-between"><span>SS:</span> <span class="font-bold">${booking.shirt_ss || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>S:</span> <span class="font-bold">${booking.shirt_s || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>M:</span> <span class="font-bold">${booking.shirt_m || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>L:</span> <span class="font-bold">${booking.shirt_l || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>XL:</span> <span class="font-bold">${booking.shirt_xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>2XL:</span> <span class="font-bold">${booking.shirt_2xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>3XL:</span> <span class="font-bold">${booking.shirt_3xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>4XL:</span> <span class="font-bold">${booking.shirt_4xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>5XL:</span> <span class="font-bold">${booking.shirt_5xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>6XL:</span> <span class="font-bold">${booking.shirt_6xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>7XL:</span> <span class="font-bold">${booking.shirt_7xl || 0}</span></div><div class="bg-purple-50 p-2 rounded flex justify-between"><span class="text-purple-600">พิเศษ:</span> <span class="font-bold text-purple-700">${booking.shirt_special || 0}</span></div></div><div class="mt-3 pt-3 border-t flex justify-between font-bold text-indigo-600"><span>รวมทั้งหมด:</span><span>${totalShirts} ตัว</span></div></div>`;
     document.getElementById('sizeDetailContent').innerHTML = html; document.getElementById('sizeDetailModal').classList.remove('hidden');
 }
 
@@ -699,7 +707,7 @@ async function generateCoopPDF(coopId) {
     // คำนวณยอดรวม
     const shirtTotal = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) +
         (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) +
-        (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0);
+        (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0) + (booking.shirt_special || 0);
 
     const shirtPrice = shirtTotal * 300;
     const flowerPrice = (booking.flower_count || 0) * 600;
@@ -791,6 +799,7 @@ async function generateCoopPDF(coopId) {
                                 ${generateShirtRowPDF('5XL', booking.shirt_5xl)}
                                 ${generateShirtRowPDF('6XL', booking.shirt_6xl)}
                                 ${generateShirtRowPDF('7XL', booking.shirt_7xl)}
+                                ${generateShirtRowPDF('ไซร์พิเศษ', booking.shirt_special)}
                             </tbody>
                         </table>
                     </div>
@@ -978,13 +987,13 @@ function generateShirtSummaryPDF(filterType = 'all') {
         { key: 'pink', emoji: '💗', name: 'สีชมพู', bgColor: '#fce7f3', borderColor: '#ec4899', textColor: '#9d174d' }
     ];
 
-    const sizeKeys = ['ss', 's', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl'];
-    const sizeLabels = ['SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL'];
+    const sizeKeys = ['ss', 's', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl', 'special'];
+    const sizeLabels = ['SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL', 'พิเศษ'];
 
     // Initialize data structure
     const sizesByColor = {};
     colors.forEach(c => {
-        sizesByColor[c.key] = { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, total: 0 };
+        sizesByColor[c.key] = { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0, total: 0 };
     });
 
     // Calculate totals
