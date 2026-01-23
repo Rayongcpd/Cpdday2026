@@ -557,25 +557,39 @@ function updateSummaryTab() {
         pending: { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 }
     };
 
-    // Date Filter Logic
-    const dateFilterInput = document.getElementById('summaryDateFilter');
-    const dateFilterValue = dateFilterInput ? dateFilterInput.value : null;
-    let cutoffDate = null;
+    // Date Range Filter Logic
+    const startDateInput = document.getElementById('summaryStartDate');
+    const endDateInput = document.getElementById('summaryEndDate');
 
-    if (dateFilterValue) {
-        // Create date object for end of the selected day (23:59:59)
-        const parts = dateFilterValue.split('-');
+    let startDate = null;
+    let endDate = null;
+
+    // Parse Start Date (00:00:00)
+    if (startDateInput && startDateInput.value) {
+        const parts = startDateInput.value.split('-');
         if (parts.length === 3) {
-            cutoffDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
+            startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
+        }
+    }
+
+    // Parse End Date (23:59:59)
+    if (endDateInput && endDateInput.value) {
+        const parts = endDateInput.value.split('-');
+        if (parts.length === 3) {
+            endDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
         }
     }
 
     allBookings.forEach(booking => {
         // Date Filtering
-        if (cutoffDate) {
+        if (startDate || endDate) {
             const bookingDate = parseBookingDate(booking.id);
-            // If we can parse the date and it's after the cutoff, skip this booking
-            if (bookingDate && bookingDate > cutoffDate) {
+            if (bookingDate) {
+                // Check Start Date
+                if (startDate && bookingDate < startDate) return;
+                // Check End Date
+                if (endDate && bookingDate > endDate) return;
+            } else {
                 return;
             }
         }
@@ -702,18 +716,33 @@ function updateShirtSummary() {
         filteredBookings = allBookings.filter(b => b.payment_status !== 'ชำระแล้ว');
     }
 
-    // Apply Date Filter if selected
-    const dateFilterInput = document.getElementById('summaryDateFilter');
-    if (dateFilterInput && dateFilterInput.value) {
-        const parts = dateFilterInput.value.split('-');
-        if (parts.length === 3) {
-            const cutoffDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
+    // Apply Date Range Filter if selected
+    const startDateInput = document.getElementById('summaryStartDate');
+    const endDateInput = document.getElementById('summaryEndDate');
 
-            filteredBookings = filteredBookings.filter(b => {
-                const bDate = parseBookingDate(b.id);
-                return !bDate || bDate <= cutoffDate;
-            });
+    if ((startDateInput && startDateInput.value) || (endDateInput && endDateInput.value)) {
+        let startDate = null;
+        let endDate = null;
+
+        if (startDateInput && startDateInput.value) {
+            const parts = startDateInput.value.split('-');
+            startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
         }
+
+        if (endDateInput && endDateInput.value) {
+            const parts = endDateInput.value.split('-');
+            endDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
+        }
+
+        filteredBookings = filteredBookings.filter(b => {
+            const bDate = parseBookingDate(b.id);
+            if (!bDate) return false; // Exclude if no valid date found
+
+            if (startDate && bDate < startDate) return false;
+            if (endDate && bDate > endDate) return false;
+
+            return true;
+        });
     }
 
     // Calculate totals
@@ -1077,22 +1106,49 @@ function generateShirtSummaryPDF(filterType = 'all') {
         filterLabelColor = '#d97706'; // yellow/amber
     }
 
-    // Apply Date Filter if selected
-    const dateFilterInput = document.getElementById('summaryDateFilter');
-    if (dateFilterInput && dateFilterInput.value) {
-        const parts = dateFilterInput.value.split('-');
-        if (parts.length === 3) {
-            const cutoffDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
+    // Apply Date Range Filter
+    const startDateInput = document.getElementById('summaryStartDate');
+    const endDateInput = document.getElementById('summaryEndDate');
 
-            filteredBookings = filteredBookings.filter(b => {
-                const bDate = parseBookingDate(b.id);
-                return !bDate || bDate <= cutoffDate;
-            });
+    let dateRangeText = "";
 
-            // Append date info to label
-            const thaiMonth = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][cutoffDate.getMonth()];
-            const thaiYear = cutoffDate.getFullYear() + 543;
-            filterLabel += ` (ข้อมูลถึง ${cutoffDate.getDate()} ${thaiMonth} ${thaiYear})`;
+    if ((startDateInput && startDateInput.value) || (endDateInput && endDateInput.value)) {
+        let startDate = null;
+        let endDate = null;
+        const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+
+        if (startDateInput && startDateInput.value) {
+            const parts = startDateInput.value.split('-');
+            startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
+
+            const d = startDate.getDate();
+            const m = thaiMonths[startDate.getMonth()];
+            const y = startDate.getFullYear() + 543;
+            dateRangeText += `จาก ${d} ${m} ${y} `;
+        }
+
+        if (endDateInput && endDateInput.value) {
+            const parts = endDateInput.value.split('-');
+            endDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
+
+            const d = endDate.getDate();
+            const m = thaiMonths[endDate.getMonth()];
+            const y = endDate.getFullYear() + 543;
+            dateRangeText += `ถึง ${d} ${m} ${y}`;
+        }
+
+        filteredBookings = filteredBookings.filter(b => {
+            const bDate = parseBookingDate(b.id);
+            if (!bDate) return false;
+
+            if (startDate && bDate < startDate) return false;
+            if (endDate && bDate > endDate) return false;
+
+            return true;
+        });
+
+        if (dateRangeText) {
+            filterLabel += ` (${dateRangeText.trim()})`;
         }
     }
 
