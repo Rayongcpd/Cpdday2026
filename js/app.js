@@ -73,7 +73,32 @@ function showToast(message, type = 'info') {
     const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
     toast.innerHTML = `${icon} ${message}`;
     document.body.appendChild(toast);
+    document.body.appendChild(toast);
     setTimeout(() => { toast.classList.add('toast-exit'); setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+function showMessageModal(title, message, type = 'info') {
+    const modal = document.getElementById('messageModal');
+    const titleEl = document.getElementById('msgModalTitle');
+    const bodyEl = document.getElementById('msgModalBody');
+    const iconEl = document.getElementById('msgModalIcon');
+
+    titleEl.textContent = title;
+    bodyEl.innerHTML = message; // Allow HTML for breaks
+
+    // Style based on type
+    if (type === 'error') {
+        iconEl.className = 'mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4 text-red-600';
+        iconEl.innerHTML = '<span class="text-3xl">🚫</span>';
+    } else if (type === 'success') {
+        iconEl.className = 'mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4 text-green-600';
+        iconEl.innerHTML = '<span class="text-3xl">✅</span>';
+    } else {
+        iconEl.className = 'mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4 text-blue-600';
+        iconEl.innerHTML = '<span class="text-3xl">ℹ️</span>';
+    }
+
+    modal.classList.remove('hidden');
 }
 
 // ===== Admin Logic =====
@@ -460,8 +485,11 @@ async function savePaymentStatus() {
 
     // Validation: Check if status is 'Paid' but no proof_url
     if (currentPaymentCoop.payment_status === 'ชำระแล้ว' && !currentPaymentCoop.proof_url) {
-        showToast('ไม่สามารถบันทึกสถานะ "ชำระแล้ว" ได้ เนื่องจากยังไม่ได้แนบหลักฐานการโอนเงิน', 'error');
-        alert('⚠️ แจ้งเตือน: ไม่สามารถบันทึกสถานะ "ชำระแล้ว" ได้\n\n- กรุณาแนบหลักฐานการโอนเงินก่อนทำการเปลี่ยนสถานะเป็นชำระแล้ว');
+        showMessageModal(
+            'ไม่สามารถบันทึกสถานะได้',
+            'ไม่สามารถเปลี่ยนสถานะเป็น "ชำระแล้ว" ได้<br>เนื่องจากยังไม่ได้แนบหลักฐานการโอนเงิน (สลิป)',
+            'error'
+        );
         return;
     }
 
