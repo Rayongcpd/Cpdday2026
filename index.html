@@ -327,12 +327,17 @@
                     <!-- Summary Cards with Dropdown Filter -->
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                         <h3 class="text-lg font-bold text-gray-700" id="summaryCardsTitle">📊 สรุปข้อมูลทั้งหมด</h3>
-                        <select id="summaryFilter" onchange="updateSummaryCards()"
-                            class="px-4 py-2 border-2 border-indigo-300 rounded-lg bg-white text-indigo-700 font-medium focus:outline-none focus:border-indigo-500">
-                            <option value="all">📊 ทั้งหมด</option>
-                            <option value="paid">✅ ชำระแล้ว</option>
-                            <option value="pending">⏳ รอชำระ</option>
-                        </select>
+                        <div class="flex gap-2">
+                            <input type="date" id="summaryDateFilter" onchange="updateSummaryTab()"
+                                class="px-4 py-2 border-2 border-indigo-300 rounded-lg bg-white text-indigo-700 font-medium focus:outline-none focus:border-indigo-500"
+                                title="ข้อมูลถึงวันที่ (เลือกวันที่เพื่อดูข้อมูลย้อนหลัง)">
+                            <select id="summaryFilter" onchange="updateSummaryCards()"
+                                class="px-4 py-2 border-2 border-indigo-300 rounded-lg bg-white text-indigo-700 font-medium focus:outline-none focus:border-indigo-500">
+                                <option value="all">📊 ทั้งหมด</option>
+                                <option value="paid">✅ ชำระแล้ว</option>
+                                <option value="pending">⏳ รอชำระ</option>
+                            </select>
+                        </div>
                     </div>
                     <div id="summaryCardsContainer" class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                         <div class="bg-blue-100 rounded-lg p-4 text-center">

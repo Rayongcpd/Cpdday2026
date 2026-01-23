@@ -523,6 +523,32 @@ function searchSummaryTable(query) { summarySearchQuery = query.toLowerCase(); s
 function changeSummaryPage(direction) { summaryCurrentPage += direction; updateSummaryTab(); }
 function normalizeCoopName(name) { if (!name) return ''; return name.toLowerCase().replace(/\s+/g, '').replace(/[,.\-_()]/g, '').trim(); }
 
+function parseBookingDate(id) {
+    if (!id) return null;
+    const idStr = String(id).trim();
+    if (idStr.length < 8) return null; // Need at least DDMMYYYY
+
+    // ID Format: DDMMYYYYHHmm (e.g., 230125691030)
+    try {
+        const day = parseInt(idStr.substring(0, 2), 10);
+        const month = parseInt(idStr.substring(2, 4), 10) - 1; // 0-indexed
+        const yearBE = parseInt(idStr.substring(4, 8), 10);
+        const yearAD = yearBE - 543;
+
+        // Optional time part
+        let hour = 0, minute = 0;
+        if (idStr.length >= 12) {
+            hour = parseInt(idStr.substring(8, 10), 10);
+            minute = parseInt(idStr.substring(10, 12), 10);
+        }
+
+        return new Date(yearAD, month, day, hour, minute);
+    } catch (e) {
+        console.error("Error parsing date from ID:", id, e);
+        return null;
+    }
+}
+
 function updateSummaryTab() {
     // === สรุปข้อมูลทั้งหมด (All Bookings) ===
     window.summaryData = {
@@ -531,7 +557,29 @@ function updateSummaryTab() {
         pending: { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 }
     };
 
+    // Date Filter Logic
+    const dateFilterInput = document.getElementById('summaryDateFilter');
+    const dateFilterValue = dateFilterInput ? dateFilterInput.value : null;
+    let cutoffDate = null;
+
+    if (dateFilterValue) {
+        // Create date object for end of the selected day (23:59:59)
+        const parts = dateFilterValue.split('-');
+        if (parts.length === 3) {
+            cutoffDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
+        }
+    }
+
     allBookings.forEach(booking => {
+        // Date Filtering
+        if (cutoffDate) {
+            const bookingDate = parseBookingDate(booking.id);
+            // If we can parse the date and it's after the cutoff, skip this booking
+            if (bookingDate && bookingDate > cutoffDate) {
+                return;
+            }
+        }
+
         const normalizedName = normalizeCoopName(booking.coop_name);
         const bookingShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0) + (booking.shirt_special || 0);
 
@@ -652,6 +700,20 @@ function updateShirtSummary() {
         filteredBookings = allBookings.filter(b => b.payment_status === 'ชำระแล้ว');
     } else if (filterValue === 'pending') {
         filteredBookings = allBookings.filter(b => b.payment_status !== 'ชำระแล้ว');
+    }
+
+    // Apply Date Filter if selected
+    const dateFilterInput = document.getElementById('summaryDateFilter');
+    if (dateFilterInput && dateFilterInput.value) {
+        const parts = dateFilterInput.value.split('-');
+        if (parts.length === 3) {
+            const cutoffDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
+
+            filteredBookings = filteredBookings.filter(b => {
+                const bDate = parseBookingDate(b.id);
+                return !bDate || bDate <= cutoffDate;
+            });
+        }
     }
 
     // Calculate totals
@@ -1013,6 +1075,25 @@ function generateShirtSummaryPDF(filterType = 'all') {
         filteredBookings = allBookings.filter(b => b.payment_status !== 'ชำระแล้ว');
         filterLabel = '⏳ รอชำระ';
         filterLabelColor = '#d97706'; // yellow/amber
+    }
+
+    // Apply Date Filter if selected
+    const dateFilterInput = document.getElementById('summaryDateFilter');
+    if (dateFilterInput && dateFilterInput.value) {
+        const parts = dateFilterInput.value.split('-');
+        if (parts.length === 3) {
+            const cutoffDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
+
+            filteredBookings = filteredBookings.filter(b => {
+                const bDate = parseBookingDate(b.id);
+                return !bDate || bDate <= cutoffDate;
+            });
+
+            // Append date info to label
+            const thaiMonth = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][cutoffDate.getMonth()];
+            const thaiYear = cutoffDate.getFullYear() + 543;
+            filterLabel += ` (ข้อมูลถึง ${cutoffDate.getDate()} ${thaiMonth} ${thaiYear})`;
+        }
     }
 
     // Calculate sizes by color
