@@ -457,6 +457,14 @@ async function uploadSlip(inputId = 'slipInput', btnId = 'uploadBtn') {
 
 async function savePaymentStatus() {
     if (!currentPaymentCoop || !isAdmin) return;
+
+    // Validation: Check if status is 'Paid' but no proof_url
+    if (currentPaymentCoop.payment_status === 'ชำระแล้ว' && !currentPaymentCoop.proof_url) {
+        showToast('ไม่สามารถบันทึกสถานะ "ชำระแล้ว" ได้ เนื่องจากยังไม่ได้แนบหลักฐานการโอนเงิน', 'error');
+        alert('⚠️ แจ้งเตือน: ไม่สามารถบันทึกสถานะ "ชำระแล้ว" ได้\n\n- กรุณาแนบหลักฐานการโอนเงินก่อนทำการเปลี่ยนสถานะเป็นชำระแล้ว');
+        return;
+    }
+
     const btn = document.getElementById('savePaymentBtn'); btn.disabled = true; btn.innerHTML = '<div class="spinner mx-auto"></div>';
     try { const result = await ApiClient.updateBooking(currentPaymentCoop); btn.disabled = false; btn.innerHTML = 'บันทึกสถานะ'; if (result.isOk) { showToast('บันทึกสถานะสำเร็จ!', 'success'); closePaymentModal(); init(); } else { showToast('เกิดข้อผิดพลาด: ' + result.error, 'error'); } }
     catch (error) { btn.disabled = false; btn.innerHTML = 'บันทึกสถานะ'; showToast('Connection error: ' + error.message, 'error'); }
