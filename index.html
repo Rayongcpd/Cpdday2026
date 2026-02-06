@@ -60,167 +60,206 @@
             <!-- Booking Tab -->
             <div id="content-booking" class="max-w-4xl mx-auto">
                 <div class="bg-white rounded-lg shadow-lg p-6 space-y-6">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">📝 ลงทะเบียนจองกิจกรรม</h2>
 
-                    <!-- Step 1: สหกรณ์ -->
-                    <div class="space-y-3">
-                        <label class="block text-lg font-semibold text-gray-700">1. ชื่อสหกรณ์</label>
-                        <input type="text" id="coopName" placeholder="กรอกชื่อสหกรณ์"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                    </div>
+                    <!-- ===== ปิดรับจองแล้ว - แสดงข้อความแทนฟอร์ม ===== -->
+                    <div class="text-center py-8">
+                        <div class="mx-auto w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mb-6">
+                            <span class="text-5xl">🚫</span>
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-4">ปิดรับจองแล้ว</h2>
+                        <p class="text-lg text-gray-600 mb-6">ขณะนี้ระบบปิดทำการรับจองแล้ว</p>
 
-                    <!-- Step 1.1: PIN Code -->
-                    <div class="space-y-3">
-                        <label class="block text-lg font-semibold text-gray-700">
-                            1.1 เบอร์โทรศัพท์มือถือที่สามารถติดต่อได้
-                        </label>
-                        <input type="tel" id="bookingPin" placeholder="กรอกเบอร์โทรศัพท์ 10 หลัก (ไม่ต้องมีขีด -)"
-                            maxlength="10"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none bg-yellow-50"
-                            oninput="this.value = this.value.replace(/[^0-9]/g, '');">
-                        <p class="text-sm text-gray-500">*
-                            เบอร์โทรศัพท์นี้ใช้ยืนยันตัวตนเมื่อต้องการแจ้งชำระเงินหรือแก้ไขข้อมูล</p>
-                    </div>
+                        <div class="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
+                            <p class="text-orange-700 font-medium">⚠️ หากท่านต้องการจองเพิ่มเติม</p>
+                            <p class="text-gray-700">กรุณาติดต่อสำนักงานโดยตรง</p>
+                        </div>
 
-                    <!-- Step 2: สี -->
-                    <div class="space-y-3">
-                        <label class="block text-lg font-semibold text-gray-700">2. เลือกสีทีมกีฬา</label>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <button onclick="selectColor('green')"
-                                class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
-                                data-color="green">
-                                <div class="w-full h-20 bg-green-500 rounded-md mb-2"></div>
-                                <p class="font-medium">🟢 สีเขียว</p>
+                        <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 max-w-md mx-auto">
+                            <p class="font-semibold text-blue-800 mb-2">📞 ช่องทางติดต่อ:</p>
+                            <p class="text-gray-700 font-medium text-lg">สำนักงานสหกรณ์จังหวัดระยอง</p>
+                            <p class="text-3xl font-bold text-blue-700 mt-2">📱 038-694106</p>
+                        </div>
+
+                        <div class="mt-8 flex justify-center gap-4">
+                            <button onclick="switchTab('payment')"
+                                class="bg-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-600 transition-colors">
+                                💰 แจ้งชำระเงิน
                             </button>
-                            <button onclick="selectColor('blue')"
-                                class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
-                                data-color="blue">
-                                <div class="w-full h-20 bg-blue-500 rounded-md mb-2"></div>
-                                <p class="font-medium">🔵 สีฟ้า</p>
-                            </button>
-                            <button onclick="selectColor('purple')"
-                                class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
-                                data-color="purple">
-                                <div class="w-full h-20 bg-purple-500 rounded-md mb-2"></div>
-                                <p class="font-medium">🟣 สีม่วง</p>
-                            </button>
-                            <button onclick="selectColor('pink')"
-                                class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
-                                data-color="pink">
-                                <div class="w-full h-20 bg-pink-500 rounded-md mb-2"></div>
-                                <p class="font-medium">💗 สีชมพู</p>
+                            <button onclick="switchTab('status')"
+                                class="bg-indigo-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-600 transition-colors">
+                                📜 ตรวจสอบสถานะ
                             </button>
                         </div>
                     </div>
+                    <!-- ===== จบส่วนปิดรับจอง ===== -->
 
-                    <!-- Step 3: เสื้อ -->
-                    <div class="space-y-3">
-                        <label class="block text-lg font-semibold text-gray-700">3. จำนวนเสื้อกีฬา (300 บาท/ตัว)</label>
-                        <p class="text-sm text-gray-500 mb-2">* หน่วยวัดเป็นนิ้ว ± ไม่เกิน 1 นิ้ว</p>
-                        <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium mb-1">SS</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 34" / ยาว 25"</p>
-                                <input type="number" id="shirtSS" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">S</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 36" / ยาว 26"</p>
-                                <input type="number" id="shirtS" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">M</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 38" / ยาว 27"</p>
-                                <input type="number" id="shirtM" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">L</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 40" / ยาว 28"</p>
-                                <input type="number" id="shirtL" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">XL</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 42" / ยาว 29"</p>
-                                <input type="number" id="shirtXL" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">2XL</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 44" / ยาว 30"</p>
-                                <input type="number" id="shirt2XL" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">3XL</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 46" / ยาว 31"</p>
-                                <input type="number" id="shirt3XL" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">4XL</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 48" / ยาว 32"</p>
-                                <input type="number" id="shirt4XL" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">5XL</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 50" / ยาว 33"</p>
-                                <input type="number" id="shirt5XL" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">6XL</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 52" / ยาว 34"</p>
-                                <input type="number" id="shirt6XL" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">7XL</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 54" / ยาว 35"</p>
-                                <input type="number" id="shirt7XL" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 text-purple-600">ไซร์พิเศษ</label>
-                                <p class="text-xs text-gray-500 mb-1">อก 63" / ยาว 25"</p>
-                                <input type="number" id="shirtSpecial" min="0" placeholder="-"
-                                    class="w-full px-3 py-2 border-2 border-purple-300 rounded-lg bg-purple-50">
+                    <!-- ===== ฟอร์มเดิม (ซ่อนไว้) ===== -->
+                    <div class="hidden">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">📝 ลงทะเบียนจองกิจกรรม</h2>
+
+                        <!-- Step 1: สหกรณ์ -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-semibold text-gray-700">1. ชื่อสหกรณ์</label>
+                            <input type="text" id="coopName" placeholder="กรอกชื่อสหกรณ์"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                        </div>
+
+                        <!-- Step 1.1: PIN Code -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-semibold text-gray-700">
+                                1.1 เบอร์โทรศัพท์มือถือที่สามารถติดต่อได้
+                            </label>
+                            <input type="tel" id="bookingPin" placeholder="กรอกเบอร์โทรศัพท์ 10 หลัก (ไม่ต้องมีขีด -)"
+                                maxlength="10"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none bg-yellow-50"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                            <p class="text-sm text-gray-500">*
+                                เบอร์โทรศัพท์นี้ใช้ยืนยันตัวตนเมื่อต้องการแจ้งชำระเงินหรือแก้ไขข้อมูล</p>
+                        </div>
+
+                        <!-- Step 2: สี -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-semibold text-gray-700">2. เลือกสีทีมกีฬา</label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <button onclick="selectColor('green')"
+                                    class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
+                                    data-color="green">
+                                    <div class="w-full h-20 bg-green-500 rounded-md mb-2"></div>
+                                    <p class="font-medium">🟢 สีเขียว</p>
+                                </button>
+                                <button onclick="selectColor('blue')"
+                                    class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
+                                    data-color="blue">
+                                    <div class="w-full h-20 bg-blue-500 rounded-md mb-2"></div>
+                                    <p class="font-medium">🔵 สีฟ้า</p>
+                                </button>
+                                <button onclick="selectColor('purple')"
+                                    class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
+                                    data-color="purple">
+                                    <div class="w-full h-20 bg-purple-500 rounded-md mb-2"></div>
+                                    <p class="font-medium">🟣 สีม่วง</p>
+                                </button>
+                                <button onclick="selectColor('pink')"
+                                    class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
+                                    data-color="pink">
+                                    <div class="w-full h-20 bg-pink-500 rounded-md mb-2"></div>
+                                    <p class="font-medium">💗 สีชมพู</p>
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Step 4: พานพุ่ม -->
-                    <div class="space-y-3">
-                        <label class="block text-lg font-semibold text-gray-700">4. จำนวนพานพุ่ม (600 บาท/พาน)</label>
-                        <input type="number" id="flowerCount" min="0" placeholder="-"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
-                    </div>
+                        <!-- Step 3: เสื้อ -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-semibold text-gray-700">3. จำนวนเสื้อกีฬา (300
+                                บาท/ตัว)</label>
+                            <p class="text-sm text-gray-500 mb-2">* หน่วยวัดเป็นนิ้ว ± ไม่เกิน 1 นิ้ว</p>
+                            <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">SS</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 34" / ยาว 25"</p>
+                                    <input type="number" id="shirtSS" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">S</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 36" / ยาว 26"</p>
+                                    <input type="number" id="shirtS" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">M</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 38" / ยาว 27"</p>
+                                    <input type="number" id="shirtM" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">L</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 40" / ยาว 28"</p>
+                                    <input type="number" id="shirtL" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">XL</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 42" / ยาว 29"</p>
+                                    <input type="number" id="shirtXL" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">2XL</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 44" / ยาว 30"</p>
+                                    <input type="number" id="shirt2XL" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">3XL</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 46" / ยาว 31"</p>
+                                    <input type="number" id="shirt3XL" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">4XL</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 48" / ยาว 32"</p>
+                                    <input type="number" id="shirt4XL" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">5XL</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 50" / ยาว 33"</p>
+                                    <input type="number" id="shirt5XL" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">6XL</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 52" / ยาว 34"</p>
+                                    <input type="number" id="shirt6XL" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">7XL</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 54" / ยาว 35"</p>
+                                    <input type="number" id="shirt7XL" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1 text-purple-600">ไซร์พิเศษ</label>
+                                    <p class="text-xs text-gray-500 mb-1">อก 63" / ยาว 25"</p>
+                                    <input type="number" id="shirtSpecial" min="0" placeholder="-"
+                                        class="w-full px-3 py-2 border-2 border-purple-300 rounded-lg bg-purple-50">
+                                </div>
+                            </div>
+                        </div>
 
-                    <!-- Step 5: โต๊ะจีน -->
-                    <div class="space-y-3">
-                        <label class="block text-lg font-semibold text-gray-700">5. จำนวนโต๊ะจีน (3,000
-                            บาท/โต๊ะ)</label>
-                        <input type="number" id="tableCount" min="0" placeholder="-"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
-                    </div>
+                        <!-- Step 4: พานพุ่ม -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-semibold text-gray-700">4. จำนวนพานพุ่ม (600
+                                บาท/พาน)</label>
+                            <input type="number" id="flowerCount" min="0" placeholder="-"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                        </div>
 
-                    <!-- Step 6: เงินสนับสนุน -->
-                    <div class="space-y-3">
-                        <label class="block text-lg font-semibold text-gray-700">6. เงินสนับสนุน </label>
-                        <p class="text-sm text-gray-500">* ระบุจำนวนเงินเพื่อสนับสนุนกิจกรรมนี้ *</p>
-                        <input type="number" id="sponsorAmount" min="0" placeholder="ระบุจำนวนเงินสนับสนุน (บาท)"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 bg-green-50">
-                    </div>
+                        <!-- Step 5: โต๊ะจีน -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-semibold text-gray-700">5. จำนวนโต๊ะจีน (3,000
+                                บาท/โต๊ะ)</label>
+                            <input type="number" id="tableCount" min="0" placeholder="-"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                        </div>
 
-                    <!-- Preview Button -->
-                    <button onclick="previewBooking()"
-                        class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:bg-indigo-700 transition-colors">
-                        ถัดไป: ตรวจสอบข้อมูล
-                    </button>
+                        <!-- Step 6: เงินสนับสนุน -->
+                        <div class="space-y-3">
+                            <label class="block text-lg font-semibold text-gray-700">6. เงินสนับสนุน </label>
+                            <p class="text-sm text-gray-500">* ระบุจำนวนเงินเพื่อสนับสนุนกิจกรรมนี้ *</p>
+                            <input type="number" id="sponsorAmount" min="0" placeholder="ระบุจำนวนเงินสนับสนุน (บาท)"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 bg-green-50">
+                        </div>
+
+                        <!-- Preview Button -->
+                        <button onclick="previewBooking()"
+                            class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:bg-indigo-700 transition-colors">
+                            ถัดไป: ตรวจสอบข้อมูล
+                        </button>
+                    </div>
+                    <!-- ===== จบฟอร์มเดิม (ซ่อนไว้) ===== -->
                 </div>
             </div>
 
@@ -580,9 +619,11 @@
                                         <th class="border px-4 py-2 text-center">ยอดรวม</th>
                                         <th class="border px-4 py-2 text-center">รายละเอียด</th>
                                         <th class="border px-4 py-2 text-center">สถานะ</th>
-                                        <th id="bookingIdHeader" class="border px-4 py-2 text-center hidden">Booking ID
+                                        <th id="bookingIdHeader" class="border px-4 py-2 text-center hidden">Booking
+                                            ID
                                         </th>
-                                        <th id="pdfExportHeader" class="border px-4 py-2 text-center hidden">เอกสาร</th>
+                                        <th id="pdfExportHeader" class="border px-4 py-2 text-center hidden">เอกสาร
+                                        </th>
                                         <th id="distributionHeader" class="border px-4 py-2 text-center hidden">
                                             การแจกจ่าย</th>
                                     </tr>
@@ -901,6 +942,37 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Booking Closed Modal -->
+    <div id="bookingClosedModal"
+        class="hidden fixed inset-0 modal-backdrop z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-orange-100 p-3 rounded-full">
+                    <span class="text-3xl">🚫</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">ปิดรับจองแล้ว</h3>
+            </div>
+
+            <div class="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 mb-4">
+                <p class="text-orange-700 font-medium mb-2">⚠️ ขณะนี้ปิดทำการรับจองแล้ว</p>
+                <p class="text-gray-700">
+                    หากท่านต้องการจองเพิ่มเติม กรุณาติดต่อสำนักงานโดยตรง
+                </p>
+            </div>
+
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+                <p class="font-semibold text-blue-800 mb-2">📞 ช่องทางติดต่อ:</p>
+                <p class="text-gray-700 font-medium">สำนักงานสหกรณ์จังหวัดระยอง</p>
+                <p class="text-2xl font-bold text-blue-700 mt-1">📱 038-694106</p>
+            </div>
+
+            <button onclick="closeBookingClosedModal()"
+                class="w-full bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-colors">
+                ปิด
+            </button>
         </div>
     </div>
 

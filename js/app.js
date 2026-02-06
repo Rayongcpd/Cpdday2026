@@ -185,6 +185,11 @@ function selectColor(color) {
 let isPhoneVerified = false;  // Track if phone has been verified
 
 async function previewBooking() {
+    // === ปิดรับจองแล้ว - แสดง Popup แจ้งเตือน ===
+    showBookingClosedModal();
+    return;
+
+    // === โค้ดเดิมด้านล่างถูก disable ไว้ ===
     const coopName = document.getElementById('coopName').value.trim();
     const bookingPin = document.getElementById('bookingPin').value.trim();
     if (!coopName) { showToast('กรุณากรอกชื่อสหกรณ์', 'error'); return; }
@@ -329,6 +334,15 @@ function resetForm() {
     editingBookingId = null; selectedColor = '';
     isPhoneVerified = false;  // Reset phone verification when form is cleared
     document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('ring-4', 'ring-indigo-500', 'bg-indigo-50'));
+}
+
+// ===== Booking Closed Modal =====
+function showBookingClosedModal() {
+    document.getElementById('bookingClosedModal').classList.remove('hidden');
+}
+
+function closeBookingClosedModal() {
+    document.getElementById('bookingClosedModal').classList.add('hidden');
 }
 
 // ===== Blocked Phone Modal =====
