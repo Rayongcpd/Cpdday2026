@@ -1156,7 +1156,7 @@ async function generateCoopPDF(coopId) {
 
     // Current Date (B.E.)
     const now = new Date();
-    const dateStr = \`${now.getDate()}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear() + 543}\`;
+    const dateStr = `${now.getDate()}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear() + 543}`;
 
     // Dynamic Activity Rendering
     let sizeableItemsHTML = '';
@@ -1184,10 +1184,10 @@ async function generateCoopPDF(coopId) {
                 return generateItemRowPDF(opt, item ? item.quantity : 0, act.price);
             }).join('');
 
-            sizeableItemsHTML += \`
+            sizeableItemsHTML += `
                 <div style="margin-bottom: 25px; page-break-inside: avoid;">
                     <h3 style="font-size: 16px; font-weight: bold; color: #374151; margin-bottom: 12px; border-left: 4px solid #6366f1; padding-left: 10px;">
-                        📦 \${act.name} (หน่วยละ \${act.price.toLocaleString()} บาท)
+                        📦 ${act.name} (หน่วยละ ${act.price.toLocaleString()} บาท)
                     </h3>
                     <div style="display: flex; gap: 20px;">
                         <div style="flex: 1;">
@@ -1197,7 +1197,7 @@ async function generateCoopPDF(coopId) {
                                     <th style="padding: 10px; text-align: center;">จำนวน</th>
                                     <th style="padding: 10px; text-align: right;">บาท</th>
                                 </tr>
-                                \${renderCol(leftCol)}
+                                ${renderCol(leftCol)}
                             </table>
                         </div>
                         <div style="flex: 1;">
@@ -1207,32 +1207,32 @@ async function generateCoopPDF(coopId) {
                                     <th style="padding: 10px; text-align: center;">จำนวน</th>
                                     <th style="padding: 10px; text-align: right;">บาท</th>
                                 </tr>
-                                \${renderCol(rightCol)}
+                                ${renderCol(rightCol)}
                             </table>
                         </div>
                     </div>
-                </div>\`;
+                </div>`;
         } else {
             // Render as a standard item row (e.g. Flowers, Tables)
             const totalQty = items.reduce((sum, it) => sum + it.quantity, 0);
-            standardItemsHTML += \`
+            standardItemsHTML += `
                 <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 12px 0; font-weight: 500;">\${act.name} (\${act.price.toLocaleString()} บ.)</td>
-                    <td style="padding: 12px 0; text-align: center;">\${totalQty} หน่วย</td>
-                    <td style="padding: 12px 0; text-align: right; font-weight: bold; color: #1e293b;">\${actSubtotal.toLocaleString()}</td>
-                </tr>\`;
+                    <td style="padding: 12px 0; font-weight: 500;">${act.name} (${act.price.toLocaleString()} บ.)</td>
+                    <td style="padding: 12px 0; text-align: center;">${totalQty} หน่วย</td>
+                    <td style="padding: 12px 0; text-align: right; font-weight: bold; color: #1e293b;">${actSubtotal.toLocaleString()}</td>
+                </tr>`;
         }
     });
 
     // Add Sponsor Amount separately
     grandTotal += (booking.sponsor_amount || 0);
 
-    const pdfContent = \`
+    const pdfContent = `
         <div id="pdf-content" style="font-family: 'Kanit', sans-serif; color: #1e293b; padding: 40px; background: white; width: 730px; min-height: 1000px; box-sizing: border-box; position: relative;">
             
             <div style="text-align: center; margin-bottom: 25px;">
                 <h1 style="font-size: 24px; font-weight: 900; color: #111827; margin: 0; line-height: 1.2;">ใบสรุปการสั่งจองและลงทะเบียน</h1>
-                <h2 style="font-size: 14px; font-weight: 500; color: #64748b; margin: 5px 0 0 0;">งานวันสหกรณ์แห่งชาติ \${window.activeEvent?.name || ''}</h2>
+                <h2 style="font-size: 14px; font-weight: 500; color: #64748b; margin: 5px 0 0 0;">งานวันสหกรณ์แห่งชาติ ${window.activeEvent?.name || ''}</h2>
             </div>
 
             <div style="border-bottom: 4px solid #22c55e; margin-bottom: 25px;"></div>
@@ -1241,43 +1241,43 @@ async function generateCoopPDF(coopId) {
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td style="width: 120px; font-weight: 700; color: #64748b;">ชื่อสหกรณ์:</td>
-                        <td style="font-size: 18px; font-weight: 950;">\${booking.coop_name}</td>
+                        <td style="font-size: 18px; font-weight: 950;">${booking.coop_name}</td>
                     </tr>
                     <tr>
                         <td style="font-weight: 700; color: #64748b;">สีทีมกีฬา:</td>
-                        <td><span style="background-color: \${colorHex}; color: white; padding: 3px 12px; border-radius: 99px; font-weight: 800;">\${colorName}</span></td>
+                        <td><span style="background-color: ${colorHex}; color: white; padding: 3px 12px; border-radius: 99px; font-weight: 800;">${colorName}</span></td>
                     </tr>
-                    <tr><td style="font-weight: 700; color: #64748b;">ID การจอง:</td><td style="font-family: monospace;">#\${booking.id}</td></tr>
+                    <tr><td style="font-weight: 700; color: #64748b;">ID การจอง:</td><td style="font-family: monospace;">#${booking.id}</td></tr>
                 </table>
             </div>
 
-            \${sizeableItemsHTML}
+            ${sizeableItemsHTML}
 
             <div style="display: flex; gap: 20px; align-items: flex-start; margin-top: 15px;">
                 <div style="flex: 1.2;">
                     <h3 style="font-size: 15px; font-weight: bold; color: #374151; margin-bottom: 10px; border-left: 4px solid #10b981; padding-left: 10px;">🎁 รายการอื่นๆ</h3>
                     <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                        \${standardItemsHTML}
-                        \${booking.sponsor_amount > 0 ? \`
+                        ${standardItemsHTML}
+                        ${booking.sponsor_amount > 0 ? `
                         <tr>
                             <td style="padding: 10px 0;">เงินสนับสนุนกิจกรรม</td>
                             <td style="padding: 10px 0; text-align: center;">-</td>
-                            <td style="padding: 10px 0; text-align: right; font-weight: bold; color: #10b981;">+\${booking.sponsor_amount.toLocaleString()}</td>
-                        </tr>\` : ''}
+                            <td style="padding: 10px 0; text-align: right; font-weight: bold; color: #10b981;">+${booking.sponsor_amount.toLocaleString()}</td>
+                        </tr>` : ''}
                     </table>
                 </div>
 
                 <div style="flex: 0.8; background-color: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; text-align: center;">
                     <div style="font-size: 12px; font-weight: 800; color: #15803d; margin-bottom: 5px;">ยอดชำระสุทธิ</div>
-                    <div style="font-size: 32px; font-weight: 950; color: #166534;">\${grandTotal.toLocaleString()} <span style="font-size: 14px; font-weight: 600;">บาท</span></div>
+                    <div style="font-size: 32px; font-weight: 950; color: #166534;">${grandTotal.toLocaleString()} <span style="font-size: 14px; font-weight: 600;">บาท</span></div>
                 </div>
             </div>
 
             <div style="margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8;">
-                <div>สำนักงานสหกรณ์จังหวัดระยอง | ID: #\${booking.id}</div>
-                <div style="text-align: right;">พิมพ์เมื่อ: \${dateStr}</div>
+                <div>สำนักงานสหกรณ์จังหวัดระยอง | ID: #${booking.id}</div>
+                <div style="text-align: right;">พิมพ์เมื่อ: ${dateStr}</div>
             </div>
-        </div>\`;
+        </div>`;
 
     const container = document.createElement('div');
     container.innerHTML = pdfContent;
@@ -1291,7 +1291,7 @@ async function generateCoopPDF(coopId) {
 
     const opt = {
         margin: [10, 10, 10, 10],
-        filename: \`เอกสารจอง_\${booking.coop_name.replace(/\\s+/g, '_')}_\${booking.id}.pdf\`,
+        filename: `เอกสารจอง_${booking.coop_name.replace(/\s+/g, '_')}_${booking.id}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -1302,23 +1302,24 @@ async function generateCoopPDF(coopId) {
             .then(() => { document.body.removeChild(container); document.body.removeChild(loadingMsg); showToast('ออกรายงานสำเร็จ!', 'success'); })
             .catch(err => { console.error(err); document.body.removeChild(container); document.body.removeChild(loadingMsg); showToast('ผิดพลาด', 'error'); });
     }, 500);
+
 }
 
 function generateItemRowPDF(option, count, unitPrice) {
     if (!count || count === 0) {
-        return \`
+        return `
             <tr style="color: #cbd5e1;">
-                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">\${option}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${option}</td>
                 <td style="padding: 10px; text-align: center; border-bottom: 1px solid #f1f5f9;">-</td>
                 <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f1f5f9;">-</td>
-            </tr>\`;
+            </tr>`;
     }
-    return \`
+    return `
         <tr style="color: #334155;">
-            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: 600;">\${option}</td>
-            <td style="padding: 10px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 800;">\${count}</td>
-            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f1f5f9; font-weight: 800;">\${(count * unitPrice).toLocaleString()}</td>
-        </tr>\`;
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: 600;">${option}</td>
+            <td style="padding: 10px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 800;">${count}</td>
+            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f1f5f9; font-weight: 800;">${(count * unitPrice).toLocaleString()}</td>
+        </tr>`;
 }
 
 /**
@@ -1368,7 +1369,7 @@ function generateDetailedSummaryPDF(filterType = 'all') {
     });
 
     const now = new Date();
-    const dateTimeStr = \`\${now.getDate()}/\${now.getMonth()+1}/\${now.getFullYear()+543} \${String(now.getHours()).padStart(2,'0')}:\${String(now.getMinutes()).padStart(2,'0')} น.\`;
+    const dateTimeStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()+543} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} น.`;
     let sectionsHTML = '';
     
     window.availableActivities.forEach(act => {
@@ -1376,66 +1377,66 @@ function generateDetailedSummaryPDF(filterType = 'all') {
         if (summ.totalQty === 0) return;
 
         if (act.type === 'Sizeable') {
-            const colorHeaders = window.availableColors.map(c => \`
+            const colorHeaders = window.availableColors.map(c => `
                 <th style="padding: 8px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 11px;">
-                    \${c.name}
-                </th>\`).join('');
+                    ${c.name}
+                </th>`).join('');
             
             const rowsHTML = act.options.map(opt => {
                 const optData = summ.options[opt];
                 if (optData.total === 0) return '';
-                const colorCells = window.availableColors.map(c => \`
+                const colorCells = window.availableColors.map(c => `
                     <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">
-                        \${optData[c.id] || '-'}
-                    </td>\`).join('');
-                return \`
+                        ${optData[c.id] || '-'}
+                    </td>`).join('');
+                return `
                     <tr>
-                        <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: 700; background: #f8fafc;">\${opt}</td>
-                        \${colorCells}
-                        <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 900; background: #f1f5f9;">\${optData.total}</td>
-                    </tr>\`;
+                        <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: 700; background: #f8fafc;">${opt}</td>
+                        ${colorCells}
+                        <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 900; background: #f1f5f9;">${optData.total}</td>
+                    </tr>`;
             }).join('');
 
-            sectionsHTML += \`
+            sectionsHTML += `
                 <div style="margin-bottom: 30px; page-break-inside: avoid;">
                     <div style="font-size: 15px; font-weight: bold; color: #1e293b; margin-bottom: 12px; border-left: 5px solid #6366f1; padding-left: 12px;">
-                        📦 สรุปยอด: \${act.name} (รวมทั้งหมด \${summ.totalQty} หน่วย)
+                        📦 สรุปยอด: ${act.name} (รวมทั้งหมด ${summ.totalQty} หน่วย)
                     </div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center;">
                         <thead>
                             <tr style="background: #f1f5f9;">
                                 <th style="padding: 10px; border: 1px solid #e2e8f0; text-align: left; width: 100px;">ตัวเลือก/ไซส์</th>
-                                \${colorHeaders}
+                                ${colorHeaders}
                                 <th style="padding: 10px; border: 1px solid #e2e8f0; background: #1e293b; color: white; width: 70px;">รวม</th>
                             </tr>
                         </thead>
-                        <tbody>\${rowsHTML}</tbody>
+                        <tbody>${rowsHTML}</tbody>
                     </table>
-                </div>\`;
+                </div>`;
         } else {
-            sectionsHTML += \`
+            sectionsHTML += `
                 <div style="margin-bottom: 20px; page-break-inside: avoid; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-size: 16px; font-weight: 800; color: #334155;">🎁 \${act.name}</div>
+                    <div style="font-size: 16px; font-weight: 800; color: #334155;">🎁 ${act.name}</div>
                     <div style="text-align: right;">
-                        <div style="font-size: 20px; font-weight: 950; color: #0f172a;">\${summ.totalQty} <span style="font-size: 12px; font-weight: 500; color: #64748b;">หน่วย</span></div>
-                        <div style="font-size: 12px; font-weight: 700; color: #10b981;">รวมเป็นเงิน \${summ.totalRevenue.toLocaleString()} บ.</div>
+                        <div style="font-size: 20px; font-weight: 950; color: #0f172a;">${summ.totalQty} <span style="font-size: 12px; font-weight: 500; color: #64748b;">หน่วย</span></div>
+                        <div style="font-size: 12px; font-weight: 700; color: #10b981;">รวมเป็นเงิน ${summ.totalRevenue.toLocaleString()} บ.</div>
                     </div>
-                </div>\`;
+                </div>`;
         }
     });
 
-    const pdfContent = \`
+    const pdfContent = `
         <div style="font-family: 'Kanit', sans-serif; width: 730px; padding: 45px; background: white; color: #1e293b;">
             <div style="text-align: center; border-bottom: 4px solid #22c55e; padding-bottom: 20px; margin-bottom: 30px;">
-                <h1 style="font-size: 26px; font-weight: 900; color: #111827; margin: 0;">\${label}</h1>
-                <p style="font-size: 14px; color: #64748b; margin-top: 10px;">\${window.activeEvent?.name || ''}</p>
-                <div style="font-size: 11px; color: #94a3b8; font-family: monospace;">พิมพ์เมื่อ: \${dateTimeStr}</div>
+                <h1 style="font-size: 26px; font-weight: 900; color: #111827; margin: 0;">${label}</h1>
+                <p style="font-size: 14px; color: #64748b; margin-top: 10px;">${window.activeEvent?.name || ''}</p>
+                <div style="font-size: 11px; color: #94a3b8; font-family: monospace;">พิมพ์เมื่อ: ${dateTimeStr}</div>
             </div>
-            \${sectionsHTML}
+            ${sectionsHTML}
             <div style="margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 11px; color: #94a3b8; text-align: right;">
                 สำนักงานสหกรณ์จังหวัดระยอง | จองออนไลน์ 24 ชม.
             </div>
-        </div>\`;
+        </div>`;
 
     const container = document.createElement('div');
     container.innerHTML = pdfContent;
@@ -1449,7 +1450,7 @@ function generateDetailedSummaryPDF(filterType = 'all') {
 
     const opt = {
         margin: [10, 10, 10, 10],
-        filename: \`สรุปยอดรวม_กิจกรรม_\${now.getFullYear()}\${now.getMonth()+1}\${now.getDate()}.pdf\`,
+        filename: `สรุปยอดรวม_กิจกรรม_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -1469,6 +1470,7 @@ function generateDetailedSummaryPDF(filterType = 'all') {
                 showToast('เกิดข้อผิดพลาดในการสร้างรายงาน', 'error');
             });
     }, 500);
+
 }
 
 function renderSettings() {
