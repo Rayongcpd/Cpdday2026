@@ -83,5 +83,19 @@ const ApiClient = {
      */
     async checkBlockedPhone(phone) {
         return await this.request('checkBlockedPhone', { phone });
+    },
+
+    /**
+     * Get system settings from Spreadsheet
+     */
+    async getSettings() {
+        return await this.request('getSettings');
+    },
+
+    /**
+     * Update system settings in Spreadsheet
+     */
+    async updateSettings(settings) {
+        return await this.request('updateSettings', settings);
     }
 };

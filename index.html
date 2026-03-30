@@ -51,6 +51,10 @@
                     class="hidden flex-1 px-4 py-3 text-sm md:text-base font-medium bg-purple-500 text-white hover:bg-purple-600 transition-colors">
                     📊 สรุปข้อมูล
                 </button>
+                <button onclick="switchTab('settings')" id="tab-settings"
+                    class="hidden flex-1 px-4 py-3 text-sm md:text-base font-medium bg-gray-700 text-white hover:bg-gray-800 transition-colors">
+                    ⚙️ ตั้งค่าระบบ
+                </button>
             </div>
         </nav>
 
@@ -97,167 +101,21 @@
                     <div class="hidden">
                         <h2 class="text-2xl font-bold text-gray-800 mb-4">📝 ลงทะเบียนจองกิจกรรม</h2>
 
-                        <!-- Step 1: สหกรณ์ -->
-                        <div class="space-y-3">
-                            <label class="block text-lg font-semibold text-gray-700">1. ชื่อสหกรณ์</label>
-                            <input type="text" id="coopName" placeholder="กรอกชื่อสหกรณ์"
-                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                        </div>
-
-                        <!-- Step 1.1: PIN Code -->
-                        <div class="space-y-3">
-                            <label class="block text-lg font-semibold text-gray-700">
-                                1.1 เบอร์โทรศัพท์มือถือที่สามารถติดต่อได้
-                            </label>
-                            <input type="tel" id="bookingPin" placeholder="กรอกเบอร์โทรศัพท์ 10 หลัก (ไม่ต้องมีขีด -)"
-                                maxlength="10"
-                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none bg-yellow-50"
-                                oninput="this.value = this.value.replace(/[^0-9]/g, '');">
-                            <p class="text-sm text-gray-500">*
-                                เบอร์โทรศัพท์นี้ใช้ยืนยันตัวตนเมื่อต้องการแจ้งชำระเงินหรือแก้ไขข้อมูล</p>
-                        </div>
-
-                        <!-- Step 2: สี -->
-                        <div class="space-y-3">
-                            <label class="block text-lg font-semibold text-gray-700">2. เลือกสีทีมกีฬา</label>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <button onclick="selectColor('green')"
-                                    class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
-                                    data-color="green">
-                                    <div class="w-full h-20 bg-green-500 rounded-md mb-2"></div>
-                                    <p class="font-medium">🟢 สีเขียว</p>
-                                </button>
-                                <button onclick="selectColor('blue')"
-                                    class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
-                                    data-color="blue">
-                                    <div class="w-full h-20 bg-blue-500 rounded-md mb-2"></div>
-                                    <p class="font-medium">🔵 สีฟ้า</p>
-                                </button>
-                                <button onclick="selectColor('purple')"
-                                    class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
-                                    data-color="purple">
-                                    <div class="w-full h-20 bg-purple-500 rounded-md mb-2"></div>
-                                    <p class="font-medium">🟣 สีม่วง</p>
-                                </button>
-                                <button onclick="selectColor('pink')"
-                                    class="color-btn p-4 rounded-lg border-4 border-transparent hover:border-gray-300 transition-all"
-                                    data-color="pink">
-                                    <div class="w-full h-20 bg-pink-500 rounded-md mb-2"></div>
-                                    <p class="font-medium">💗 สีชมพู</p>
-                                </button>
+                        <!-- Dynamic Booking Form Container -->
+                        <div id="dynamicBookingForm" class="space-y-8">
+                            <!-- This will be populated by app.js -->
+                            <div class="flex justify-center py-12">
+                                <div class="spinner"></div>
                             </div>
-                        </div>
-
-                        <!-- Step 3: เสื้อ -->
-                        <div class="space-y-3">
-                            <label class="block text-lg font-semibold text-gray-700">3. จำนวนเสื้อกีฬา (300
-                                บาท/ตัว)</label>
-                            <p class="text-sm text-gray-500 mb-2">* หน่วยวัดเป็นนิ้ว ± ไม่เกิน 1 นิ้ว</p>
-                            <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">SS</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 34" / ยาว 25"</p>
-                                    <input type="number" id="shirtSS" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">S</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 36" / ยาว 26"</p>
-                                    <input type="number" id="shirtS" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">M</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 38" / ยาว 27"</p>
-                                    <input type="number" id="shirtM" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">L</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 40" / ยาว 28"</p>
-                                    <input type="number" id="shirtL" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">XL</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 42" / ยาว 29"</p>
-                                    <input type="number" id="shirtXL" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">2XL</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 44" / ยาว 30"</p>
-                                    <input type="number" id="shirt2XL" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">3XL</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 46" / ยาว 31"</p>
-                                    <input type="number" id="shirt3XL" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">4XL</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 48" / ยาว 32"</p>
-                                    <input type="number" id="shirt4XL" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">5XL</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 50" / ยาว 33"</p>
-                                    <input type="number" id="shirt5XL" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">6XL</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 52" / ยาว 34"</p>
-                                    <input type="number" id="shirt6XL" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">7XL</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 54" / ยาว 35"</p>
-                                    <input type="number" id="shirt7XL" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1 text-purple-600">ไซร์พิเศษ</label>
-                                    <p class="text-xs text-gray-500 mb-1">อก 63" / ยาว 25"</p>
-                                    <input type="number" id="shirtSpecial" min="0" placeholder="-"
-                                        class="w-full px-3 py-2 border-2 border-purple-300 rounded-lg bg-purple-50">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Step 4: พานพุ่ม -->
-                        <div class="space-y-3">
-                            <label class="block text-lg font-semibold text-gray-700">4. จำนวนพานพุ่ม (600
-                                บาท/พาน)</label>
-                            <input type="number" id="flowerCount" min="0" placeholder="-"
-                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
-                        </div>
-
-                        <!-- Step 5: โต๊ะจีน -->
-                        <div class="space-y-3">
-                            <label class="block text-lg font-semibold text-gray-700">5. จำนวนโต๊ะจีน (3,000
-                                บาท/โต๊ะ)</label>
-                            <input type="number" id="tableCount" min="0" placeholder="-"
-                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
-                        </div>
-
-                        <!-- Step 6: เงินสนับสนุน -->
-                        <div class="space-y-3">
-                            <label class="block text-lg font-semibold text-gray-700">6. เงินสนับสนุน </label>
-                            <p class="text-sm text-gray-500">* ระบุจำนวนเงินเพื่อสนับสนุนกิจกรรมนี้ *</p>
-                            <input type="number" id="sponsorAmount" min="0" placeholder="ระบุจำนวนเงินสนับสนุน (บาท)"
-                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 bg-green-50">
                         </div>
 
                         <!-- Preview Button -->
-                        <button onclick="previewBooking()"
-                            class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:bg-indigo-700 transition-colors">
-                            ถัดไป: ตรวจสอบข้อมูล
-                        </button>
+                        <div id="formActions" class="hidden">
+                            <button onclick="previewBooking()"
+                                class="w-full bg-indigo-600 text-white py-4 px-6 rounded-xl font-bold text-xl hover:bg-indigo-700 transition-all shadow-lg transform hover:-translate-y-1 active:translate-y-0">
+                                ⏭️ ถัดไป: ตรวจสอบการจอง
+                            </button>
+                        </div>
                     </div>
                     <!-- ===== จบฟอร์มเดิม (ซ่อนไว้) ===== -->
                 </div>
@@ -584,15 +442,15 @@
                             <p class="text-sm text-gray-600 mb-3">สร้างไฟล์ PDF แบ่งตามสีทีม และแต่ละสีแบ่งตามไซส์
                                 สำหรับส่งให้ร้านค้า</p>
                             <div class="flex flex-wrap gap-3">
-                                <button onclick="generateShirtSummaryPDF('all')"
+                                <button onclick="generateDetailedSummaryPDF('all')"
                                     class="flex-1 min-w-[140px] bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all shadow-md flex items-center justify-center gap-2">
                                     📊 ทั้งหมด
                                 </button>
-                                <button onclick="generateShirtSummaryPDF('pending')"
+                                <button onclick="generateDetailedSummaryPDF('pending')"
                                     class="flex-1 min-w-[140px] bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-yellow-600 hover:to-orange-600 transition-all shadow-md flex items-center justify-center gap-2">
                                     ⏳ รอชำระ
                                 </button>
-                                <button onclick="generateShirtSummaryPDF('paid')"
+                                <button onclick="generateDetailedSummaryPDF('paid')"
                                     class="flex-1 min-w-[140px] bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-green-600 hover:to-emerald-600 transition-all shadow-md flex items-center justify-center gap-2">
                                     ✅ ชำระแล้ว
                                 </button>
@@ -646,6 +504,57 @@
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="content-settings" class="hidden max-w-4xl mx-auto">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ ตั้งค่าระบบ (Admin Only)</h2>
+                    
+                    <form id="settingsForm" onsubmit="saveSettings(event)" class="space-y-6">
+                        <!-- Event Info -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-indigo-700 border-b pb-2">📅 ข้อมูลกิจกรรม</h3>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อกิจกรรม</label>
+                                <input type="text" id="setEventName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="setIsBookingOpen" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    <span class="ml-3 text-sm font-medium text-gray-900">เปิดรับจองกิจกรรม</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Pricing -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-indigo-700 border-b pb-2">💰 การตั้งราคา (บาท)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">ราคาเสื้อ (ตัวละ)</label>
+                                    <input type="number" id="setShirtPrice" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">ราคาพานพุ่ม (พานละ)</label>
+                                    <input type="number" id="setFlowerPrice" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">ราคาโต๊ะจีน (โต๊ะละ)</label>
+                                    <input type="number" id="setTablePrice" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-bold text-lg hover:bg-green-700 transition-all shadow-lg flex items-center justify-center gap-2">
+                                💾 บันทึกการตั้งค่าทั้งหมด
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 

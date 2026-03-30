@@ -11,6 +11,13 @@ let currentPaymentCoop = null;
 let isAdmin = false;
 let editingBookingId = null;
 let pinAction = '';
+let appSettings = {
+    EVENT_NAME: 'งานวันสหกรณ์แห่งชาติ ประจำปี พ.ศ. 2569',
+    IS_BOOKING_OPEN: true,
+    SHIRT_PRICE: 300,
+    FLOWER_PRICE: 600,
+    TABLE_PRICE: 3000
+};
 
 let currentProofUrls = [];
 let currentUrlIndex = 0;
@@ -29,11 +36,21 @@ const searchColorMap = { 'green': 'เขียว', 'blue': 'ฟ้า', 'purpl
 
 // ===== Initialization =====
 async function init() {
-    applyConfig();
     showLoading(true);
     try {
+        const settingsResult = await ApiClient.getSettings();
+        if (settingsResult.isOk) {
+            appSettings = settingsResult.settings || {};
+            // Dynamic data from relational schema
+            window.activeEvent = settingsResult.activeEvent;
+            window.availableActivities = settingsResult.activities || [];
+            window.availableColors = settingsResult.colors || [];
+        }
+        
         const data = await ApiClient.getBookingData();
+        applyConfig();
         onDataLoaded(data);
+        renderDynamicForm(); // Generate the form fields dynamically
     } catch (error) {
         onLoadError(error);
     }
@@ -58,7 +75,19 @@ function onLoadError(error) {
 
 function applyConfig() {
     document.getElementById('systemTitle').textContent = CONFIG.SYSTEM_TITLE;
-    document.getElementById('eventName').textContent = CONFIG.EVENT_NAME;
+    document.getElementById('eventName').textContent = appSettings.EVENT_NAME || CONFIG.EVENT_NAME;
+    
+    // Update booking form visibility based on settings
+    const bookingForm = document.querySelector('#content-booking .bg-white > div:not(.hidden)');
+    const bookingClosedDiv = document.querySelector('#content-booking .text-center.py-8');
+    
+    if (appSettings.IS_BOOKING_OPEN || isAdmin) {
+        if (bookingForm) bookingForm.classList.remove('hidden');
+        if (bookingClosedDiv) bookingClosedDiv.classList.add('hidden');
+    } else {
+        if (bookingForm) bookingForm.classList.add('hidden');
+        if (bookingClosedDiv) bookingClosedDiv.classList.remove('hidden');
+    }
 }
 
 function showLoading(show) {
@@ -153,11 +182,17 @@ function checkAdminState() {
 
 function updateAdminUI() {
     const summaryTabBtn = document.getElementById('tab-summary');
+    const settingsTabBtn = document.getElementById('tab-settings');
     if (isAdmin) {
-        summaryTabBtn.classList.remove('hidden');
+        summaryTabBtn?.classList.remove('hidden');
+        settingsTabBtn?.classList.remove('hidden');
     } else {
-        summaryTabBtn.classList.add('hidden');
-        if (!document.getElementById('content-summary').classList.contains('hidden')) switchTab('booking');
+        summaryTabBtn?.classList.add('hidden');
+        settingsTabBtn?.classList.add('hidden');
+        if (!document.getElementById('content-summary').classList.contains('hidden') || 
+            !document.getElementById('content-settings').classList.contains('hidden')) {
+            switchTab('booking');
+        }
     }
 
     if (!document.getElementById('content-payment').classList.contains('hidden')) {
@@ -170,9 +205,170 @@ function switchTab(tab) {
     document.getElementById('content-' + tab).classList.remove('hidden');
     document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.remove('ring-4', 'ring-yellow-400'));
     document.getElementById('tab-' + tab).classList.add('ring-4', 'ring-yellow-400');
+    
     if (tab === 'summary') updateSummaryTab();
-    else if (tab === 'payment') { updatePaymentTable(); document.getElementById('paymentSearchInput').value = ''; filterPaymentTable(''); }
+    else if (tab === 'payment') { 
+        updatePaymentTable(); 
+        const searchInput = document.getElementById('paymentSearchInput');
+        if (searchInput) {
+            searchInput.value = ''; 
+            filterPaymentTable(''); 
+        }
+    }
     else if (tab === 'status') updatePublicStatusTable();
+    else if (tab === 'settings') renderSettings();
+    
+    window.scrollTo(0, 0);
+}
+
+/**
+ * Render the booking form dynamically based on activities from Google Sheets
+ */
+function renderDynamicForm() {
+    const container = document.getElementById('dynamicBookingForm');
+    if (!container) return;
+
+    if (!window.activeEvent) {
+        container.innerHTML = `<div class="text-center py-12 text-gray-500">🚫 ไม่พบกิจกรรมที่เปิดอยู่ในขณะนี้</div>`;
+        document.getElementById('formActions').classList.add('hidden');
+        return;
+    }
+
+    let html = `
+        <h2 class="text-3xl font-extrabold text-gray-900 mb-2 drop-shadow-sm flex items-center gap-3">
+            <span class="text-indigo-600">📝</span> ลงทะเบียนจองกิจกรรม
+        </h2>
+        <p class="text-gray-500 mb-8 border-l-4 border-indigo-500 pl-4 py-1">กรุณากรอกข้อมูลให้ครบถ้วนเพื่อผลประโยชน์ของท่าน</p>
+
+        <!-- Step 1: Coop Info -->
+        <div class="card p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <label class="block text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span>
+                ข้อมูลพื้นฐาน
+            </label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-600">ชื่อสหกรณ์ / สังกัด</label>
+                    <input type="text" id="coopName" placeholder="กรอกชื่อสหกรณ์"
+                        class="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-all placeholder:text-gray-300">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-600">เบอร์โทรศัพท์มือถือที่ติดต่อได้</label>
+                    <input type="tel" id="bookingPin" placeholder="กรอกเบอร์โทรศัพท์ 10 หลัก (ไม่มีขีด -)"
+                        maxlength="10"
+                        class="w-full px-5 py-3.5 border-2 border-yellow-200 bg-yellow-50/30 rounded-xl focus:border-indigo-500 focus:outline-none transition-all font-mono"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                    <p class="text-xs text-amber-600 italic">* ใช้ยืนยันตัวตนเมื่อต้องการเข้าสู่ระบบสมาชิก</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Team Color -->
+        <div class="card p-6 bg-white rounded-2xl shadow-sm border border-gray-100 mt-6">
+            <label class="block text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">2</span>
+                เลือกสีทีมกีฬา
+            </label>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">`;
+
+    // Dynamic Colors
+    window.availableColors.forEach(color => {
+        html += `
+                <button onclick="selectColor('${color.id}')"
+                    class="color-btn p-4 rounded-2xl border-4 border-transparent hover:border-indigo-200 transition-all group relative overflow-hidden"
+                    data-color="${color.id}">
+                    <div class="w-full h-16 ${color.class || 'bg-gray-500'} rounded-xl mb-3 shadow-inner transform group-hover:scale-105 transition-transform"></div>
+                    <p class="font-bold text-center text-gray-700">${color.emoji || ''} ${color.name}</p>
+                </button>`;
+    });
+
+    html += `
+            </div>
+        </div>`;
+
+    // Step 3+: Activities
+    window.availableActivities.forEach((act, index) => {
+        const stepNum = index + 3;
+        html += `
+        <div class="card p-6 bg-white rounded-2xl shadow-sm border border-gray-100 mt-6 activity-section" data-activity-id="${act.id}" data-type="${act.type}">
+            <label class="block text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">${stepNum}</span>
+                ${act.name}
+            </label>
+            <p class="text-sm text-gray-500 mb-6 bg-indigo-50 inline-block px-3 py-1 rounded-full border border-indigo-100">
+                🏷️ ราคาชิ้นละ <strong>${act.price.toLocaleString()}</strong> บาท
+            </p>`;
+
+        if (act.type === 'Sizeable') {
+            html += `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">`;
+            act.options.forEach(option => {
+                html += `
+                    <div class="space-y-1.5 group">
+                        <div class="flex justify-between items-center px-1">
+                            <label class="block text-sm font-bold text-gray-700 group-hover:text-indigo-600 transition-colors uppercase">${option}</label>
+                            <button type="button" onclick="showSizeGuide('${act.id}', '${option}')" class="text-[10px] text-gray-400 hover:text-indigo-500 transition-colors">📏 Guide</button>
+                        </div>
+                        <input type="number" data-option="${option}" min="0" placeholder="0"
+                            class="activity-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-all text-center font-bold">
+                    </div>`;
+            });
+            html += `</div>`;
+        } else {
+            html += `
+                <div class="max-w-xs">
+                    <input type="number" min="0" placeholder="ระบุจำนวนที่ต้องการ"
+                        class="activity-input w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-all font-bold text-lg">
+                    <p class="text-xs text-gray-400 mt-2 ml-1">* หากไม่ต้องการ ระบุเป็น 0 หรือปล่อยว่าง</p>
+                </div>`;
+        }
+        html += `</div>`;
+    });
+
+    // Final Step: Sponsor
+    const nextStep = (window.availableActivities.length || 0) + 3;
+    html += `
+        <div class="card p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-sm border border-green-100 mt-6">
+            <label class="block text-xl font-bold text-green-800 mb-2 flex items-center gap-2">
+                <span class="bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">${nextStep}</span>
+                เงินสนับสนุนกิจกรรม (กองกลาง)
+            </label>
+            <p class="text-sm text-green-700 mb-6 bg-white/50 inline-block px-3 py-1 rounded-full border border-green-200 italic">
+                * ระบุจำนวนเงินสำหรับสนับสนุนการจัดงาน (ตามความสมัครใจ)
+            </p>
+            <div class="max-w-md relative group">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-green-600 font-bold text-xl group-focus-within:scale-110 transition-transform">฿</span>
+                <input type="number" id="sponsorAmount" min="0" placeholder="ระบุจำนวนเงิน (บาท)"
+                    class="w-full pl-12 pr-6 py-4.5 border-2 border-green-200 rounded-2xl focus:border-green-600 focus:outline-none transition-all font-bold text-xl text-green-800">
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+    document.getElementById('formActions').classList.remove('hidden');
+}
+
+/**
+ * Placeholder for size guide - can be updated to fetch from Activities table later
+ */
+function showSizeGuide(activityId, option) {
+    if (activityId !== 'SHIRT') return;
+    const guides = {
+        'SS': 'อก 34" / ยาว 25"',
+        'S': 'อก 36" / ยาว 26"',
+        'M': 'อก 38" / ยาว 27"',
+        'L': 'อก 40" / ยาว 28"',
+        'XL': 'อก 42" / ยาว 29"',
+        '2XL': 'อก 44" / ยาว 30"',
+        '3XL': 'อก 46" / ยาว 31"',
+        '4XL': 'อก 48" / ยาว 32"',
+        '5XL': 'อก 50" / ยาว 33"',
+        '6XL': 'อก 52" / ยาว 34"',
+        '7XL': 'อก 54" / ยาว 35"',
+        'Special': 'อก 63" / ยาว 25"'
+    };
+    const guide = guides[option] || 'ไม่พบข้อมูลไซส์';
+    document.getElementById('sizeDetailContent').innerHTML = `<div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100 text-center"><p class="text-gray-500 mb-1">สัดส่วนไซส์ ${option}</p><p class="text-2xl font-bold text-indigo-700">${guide}</p></div>`;
+    document.getElementById('sizeDetailModal').classList.remove('hidden');
 }
 
 function selectColor(color) {
@@ -185,143 +381,152 @@ function selectColor(color) {
 let isPhoneVerified = false;  // Track if phone has been verified
 
 async function previewBooking() {
-    // === ปิดรับจองแล้ว - แสดง Popup แจ้งเตือน ===
-    showBookingClosedModal();
-    return;
-
-    // === โค้ดเดิมด้านล่างถูก disable ไว้ ===
+    if (!appSettings.IS_BOOKING_OPEN && !isAdmin) {
+        showBookingClosedModal();
+        return;
+    }
     const coopName = document.getElementById('coopName').value.trim();
     const bookingPin = document.getElementById('bookingPin').value.trim();
     if (!coopName) { showToast('กรุณากรอกชื่อสหกรณ์', 'error'); return; }
     if (!bookingPin || bookingPin.length !== 10) { showToast('กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก', 'error'); return; }
     if (!selectedColor) { showToast('กรุณาเลือกสีทีมกีฬา', 'error'); return; }
 
-    // Check if phone is blocked (office staff) - skip if editing existing booking
+    // Check blocked phone...
     if (!editingBookingId && !isPhoneVerified) {
         showLoading(true);
         try {
             const result = await ApiClient.checkBlockedPhone(bookingPin);
             showLoading(false);
-            if (result.isBlocked) {
-                // Show blocked phone modal
-                showBlockedPhoneModal();
-                return;
-            }
-            isPhoneVerified = true; // Mark as verified for this session
-        } catch (error) {
-            showLoading(false);
-            // If API fails, continue anyway (fail-open approach)
-            console.warn('Phone verification failed, continuing anyway:', error);
-        }
+            if (result.isBlocked) { showBlockedPhoneModal(); return; }
+            isPhoneVerified = true;
+        } catch (error) { showLoading(false); }
     }
 
-    const shirtSS = parseInt(document.getElementById('shirtSS').value) || 0;
-    const shirtS = parseInt(document.getElementById('shirtS').value) || 0;
-    const shirtM = parseInt(document.getElementById('shirtM').value) || 0;
-    const shirtL = parseInt(document.getElementById('shirtL').value) || 0;
-    const shirtXL = parseInt(document.getElementById('shirtXL').value) || 0;
-    const shirt2XL = parseInt(document.getElementById('shirt2XL').value) || 0;
-    const shirt3XL = parseInt(document.getElementById('shirt3XL').value) || 0;
-    const shirt4XL = parseInt(document.getElementById('shirt4XL').value) || 0;
-    const shirt5XL = parseInt(document.getElementById('shirt5XL').value) || 0;
-    const shirt6XL = parseInt(document.getElementById('shirt6XL').value) || 0;
-    const shirt7XL = parseInt(document.getElementById('shirt7XL').value) || 0;
-    const shirtSpecial = parseInt(document.getElementById('shirtSpecial').value) || 0;
-    const flowerCount = parseInt(document.getElementById('flowerCount').value) || 0;
-    const tableCount = parseInt(document.getElementById('tableCount').value) || 0;
-    const sponsorAmount = parseInt(document.getElementById('sponsorAmount').value) || 0;
+    // Collect Dynamic Items
+    const items = [];
+    let totalCost = 0;
+    const activitySections = document.querySelectorAll('.activity-section');
+    
+    let itemsHTML = '';
+    activitySections.forEach(section => {
+        const actId = section.dataset.activityId;
+        const actType = section.dataset.type;
+        const activity = window.availableActivities.find(a => a.id === actId);
+        if (!activity) return;
 
-    const totalShirts = shirtSS + shirtS + shirtM + shirtL + shirtXL + shirt2XL + shirt3XL + shirt4XL + shirt5XL + shirt6XL + shirt7XL + shirtSpecial;
-    const shirtCost = totalShirts * 300;
-    const flowerCost = flowerCount * 600;
-    const tableCost = tableCount * 3000;
-    const totalCost = shirtCost + flowerCost + tableCost + sponsorAmount;
+        let actSubtotal = 0;
+        let actItemsHTML = '';
+
+        const inputs = section.querySelectorAll('.activity-input');
+        inputs.forEach(input => {
+            const qty = parseInt(input.value) || 0;
+            if (qty > 0) {
+                const option = input.dataset.option || '';
+                const price = activity.price;
+                items.push({
+                    activity_id: actId,
+                    activity_name: activity.name,
+                    option: option,
+                    quantity: qty,
+                    price: price
+                });
+                actSubtotal += (qty * price);
+                actItemsHTML += `<p class="ml-4">• ${option ? option + ': ' : ''}${qty} หน่วย</p>`;
+            }
+        });
+
+        if (actSubtotal > 0) {
+            itemsHTML += `
+                <div class="mt-3">
+                    <p class="font-bold text-indigo-700">${activity.name}:</p>
+                    ${actItemsHTML}
+                    <p class="text-right text-sm text-gray-500">รวม: ${actSubtotal.toLocaleString()} บาท</p>
+                </div>
+                <hr class="my-2 border-dashed border-gray-200">
+            `;
+            totalCost += actSubtotal;
+        }
+    });
+
+    const sponsorAmount = parseInt(document.getElementById('sponsorAmount').value) || 0;
+    totalCost += sponsorAmount;
+
+    const color = window.availableColors.find(c => c.id === selectedColor);
+    const colorDisplayName = color ? `${color.emoji || ''} ${color.name}` : selectedColor;
 
     let previewHTML = `
-        <div class="space-y-2 text-gray-700">
-            <p><strong>เบอร์โทรศัพท์:</strong> <span class="text-indigo-600 font-bold">${bookingPin}</span></p>
-            <p><strong>สหกรณ์:</strong> ${coopName}</p>
-            <p><strong>สีทีม:</strong> ${colorEmoji[selectedColor]} ${colorName[selectedColor]}</p>
-            <hr class="my-3">
-            <p class="font-semibold">เสื้อกีฬา (รวม ${totalShirts} ตัว):</p>
-            ${shirtSS > 0 ? `<p>• SS: ${shirtSS} ตัว</p>` : ''}
-            ${shirtS > 0 ? `<p>• S: ${shirtS} ตัว</p>` : ''}
-            ${shirtM > 0 ? `<p>• M: ${shirtM} ตัว</p>` : ''}
-            ${shirtL > 0 ? `<p>• L: ${shirtL} ตัว</p>` : ''}
-            ${shirtXL > 0 ? `<p>• XL: ${shirtXL} ตัว</p>` : ''}
-            ${shirt2XL > 0 ? `<p>• 2XL: ${shirt2XL} ตัว</p>` : ''}
-            ${shirt3XL > 0 ? `<p>• 3XL: ${shirt3XL} ตัว</p>` : ''}
-            ${shirt4XL > 0 ? `<p>• 4XL: ${shirt4XL} ตัว</p>` : ''}
-            ${shirt5XL > 0 ? `<p>• 5XL: ${shirt5XL} ตัว</p>` : ''}
-            ${shirt6XL > 0 ? `<p>• 6XL: ${shirt6XL} ตัว</p>` : ''}
-            ${shirt7XL > 0 ? `<p>• 7XL: ${shirt7XL} ตัว</p>` : ''}
-            ${shirtSpecial > 0 ? `<p>• ไซร์พิเศษ: ${shirtSpecial} ตัว</p>` : ''}
-            <p class="text-right font-medium">ค่าเสื้อ: ${shirtCost.toLocaleString()} บาท</p>
-            <hr class="my-3">
-            <p><strong>พานพุ่ม:</strong> ${flowerCount} พาน</p>
-            <p class="text-right font-medium">ค่าพานพุ่ม: ${flowerCost.toLocaleString()} บาท</p>
-            <hr class="my-3">
-            <p><strong>โต๊ะจีน:</strong> ${tableCount} โต๊ะ</p>
-            <p class="text-right font-medium">ค่าโต๊ะจีน: ${tableCost.toLocaleString()} บาท</p>
-            ${sponsorAmount > 0 ? `<hr class="my-3"><p><strong>เงินสนับสนุน:</strong> <span class="text-green-600">+${sponsorAmount.toLocaleString()} บาท</span></p>` : ''}
+        <div class="space-y-3 text-gray-700 bg-gray-50 p-6 rounded-2xl border border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2">
+                <p><strong>เบอร์โทรศัพท์:</strong> <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono">${bookingPin}</span></p>
+                <p><strong>สีทีม:</strong> <span class="font-bold">${colorDisplayName}</span></p>
+                <p class="md:col-span-2"><strong>สหกรณ์:</strong> <span class="text-lg font-bold text-gray-900">${coopName}</span></p>
+            </div>
+            
+            <div class="pt-4 border-t border-gray-200">
+                <p class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">รายการที่เลือก:</p>
+                ${itemsHTML || '<p class="text-center py-4 text-gray-400 italic">ไม่ได้เลือกรายการใดๆ</p>'}
+            </div>
+
+            ${sponsorAmount > 0 ? `
+            <div class="pt-2">
+                <p class="font-bold text-green-700">เงินสนับสนุนกิจกรรม:</p>
+                <p class="text-right text-lg font-bold text-green-800">+ ${sponsorAmount.toLocaleString()} บาท</p>
+            </div>` : ''}
         </div>
     `;
+
+    // Store items for confirmBooking
+    window.currentPreviewItems = items;
+    window.currentPreviewTotal = totalCost;
+
     document.getElementById('previewContent').innerHTML = previewHTML;
     document.getElementById('previewTotal').textContent = totalCost.toLocaleString();
     document.getElementById('previewModal').classList.remove('hidden');
 }
 
-function closePreview() { document.getElementById('previewModal').classList.add('hidden'); }
-
 async function confirmBooking() {
     const confirmBtn = document.getElementById('confirmBtn');
+    if (confirmBtn.disabled) return;
+    
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = '<div class="spinner mx-auto"></div>';
+    const originalContent = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = '<div class="spinner mx-auto border-white"></div>';
 
     const coopName = document.getElementById('coopName').value.trim();
     const bookingPin = document.getElementById('bookingPin').value.trim();
-    const shirtSS = parseInt(document.getElementById('shirtSS').value) || 0;
-    const shirtS = parseInt(document.getElementById('shirtS').value) || 0;
-    const shirtM = parseInt(document.getElementById('shirtM').value) || 0;
-    const shirtL = parseInt(document.getElementById('shirtL').value) || 0;
-    const shirtXL = parseInt(document.getElementById('shirtXL').value) || 0;
-    const shirt2XL = parseInt(document.getElementById('shirt2XL').value) || 0;
-    const shirt3XL = parseInt(document.getElementById('shirt3XL').value) || 0;
-    const shirt4XL = parseInt(document.getElementById('shirt4XL').value) || 0;
-    const shirt5XL = parseInt(document.getElementById('shirt5XL').value) || 0;
-    const shirt6XL = parseInt(document.getElementById('shirt6XL').value) || 0;
-    const shirt7XL = parseInt(document.getElementById('shirt7XL').value) || 0;
-    const shirtSpecial = parseInt(document.getElementById('shirtSpecial').value) || 0;
-    const flowerCount = parseInt(document.getElementById('flowerCount').value) || 0;
-    const tableCount = parseInt(document.getElementById('tableCount').value) || 0;
     const sponsorAmount = parseInt(document.getElementById('sponsorAmount').value) || 0;
+    const totalAmount = window.currentPreviewTotal || 0;
+    const items = window.currentPreviewItems || [];
 
-    const totalShirts = shirtSS + shirtS + shirtM + shirtL + shirtXL + shirt2XL + shirt3XL + shirt4XL + shirt5XL + shirt6XL + shirt7XL + shirtSpecial;
-    const totalAmount = (totalShirts * 300) + (flowerCount * 600) + (tableCount * 3000) + sponsorAmount;
-
-    let bookingId = editingBookingId;
-    if (!editingBookingId) {
-        const now = new Date();
-        bookingId = String(now.getDate()).padStart(2, '0') + String(now.getMonth() + 1).padStart(2, '0') + (now.getFullYear() + 543) + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
-    }
+    const color = window.availableColors.find(c => c.id === selectedColor);
+    const colorNameText = color ? color.name : selectedColor;
 
     const bookingData = {
-        id: bookingId, pin: bookingPin, coop_name: coopName, coop_color: selectedColor,
-        shirt_ss: shirtSS, shirt_s: shirtS, shirt_m: shirtM, shirt_l: shirtL, shirt_xl: shirtXL,
-        shirt_2xl: shirt2XL, shirt_3xl: shirt3XL, shirt_4xl: shirt4XL, shirt_5xl: shirt5XL, shirt_6xl: shirt6XL, shirt_7xl: shirt7XL, shirt_special: shirtSpecial,
-        flower_count: flowerCount, table_count: tableCount, sponsor_amount: sponsorAmount, total_amount: totalAmount, payment_status: 'รอชำระ'
+        id: editingBookingId || null, // Backend will generate if null
+        event_id: window.activeEvent ? window.activeEvent.id : null,
+        pin: bookingPin,
+        coop_name: coopName,
+        coop_color: selectedColor,
+        coop_color_name: colorNameText,
+        sponsor_amount: sponsorAmount,
+        total_amount: totalAmount,
+        payment_status: 'รอชำระ',
+        items: items
     };
 
     try {
         let result = editingBookingId ? await ApiClient.updateBooking(bookingData) : await ApiClient.createBooking(bookingData);
-        confirmBtn.disabled = false;
-        confirmBtn.innerHTML = '✅ ยืนยันการจอง';
         if (result.isOk) {
             showToast(editingBookingId ? 'แก้ไขข้อมูลสำเร็จ!' : 'บันทึกข้อมูลสำเร็จ!', 'success');
-            closePreview(); resetForm(); currentPaymentCoop = null; closePaymentModal(); updatePaymentTable(); init();
-        } else { showToast('เกิดข้อผิดพลาด: ' + result.error, 'error'); }
+            closePreview(); resetForm(); updatePaymentTable(); init();
+        } else { 
+            showToast('เกิดข้อผิดพลาด: ' + result.error, 'error'); 
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalContent;
+        }
     } catch (error) {
-        confirmBtn.disabled = false; confirmBtn.innerHTML = '✅ ยืนยันการจอง';
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalContent;
         showToast('Connection error: ' + error.message, 'error');
     }
 }
@@ -330,7 +535,13 @@ function resetForm() {
     document.getElementById('coopName').value = '';
     const pinInput = document.getElementById('bookingPin');
     pinInput.value = ''; pinInput.disabled = false; pinInput.classList.remove('bg-gray-100');
-    ['shirtSS', 'shirtS', 'shirtM', 'shirtL', 'shirtXL', 'shirt2XL', 'shirt3XL', 'shirt4XL', 'shirt5XL', 'shirt6XL', 'shirt7XL', 'shirtSpecial', 'flowerCount', 'tableCount', 'sponsorAmount'].forEach(id => document.getElementById(id).value = '');
+    
+    // Clear all dynamic activity inputs
+    document.querySelectorAll('.activity-input').forEach(input => {
+        input.value = '';
+    });
+    
+    document.getElementById('sponsorAmount').value = '';
     editingBookingId = null; selectedColor = '';
     isPhoneVerified = false;  // Reset phone verification when form is cleared
     document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('ring-4', 'ring-indigo-500', 'bg-indigo-50'));
@@ -364,25 +575,32 @@ function startEditBooking() {
 }
 
 function proceedToEdit() {
+    if (!currentPaymentCoop) return;
     editingBookingId = currentPaymentCoop.id;
     document.getElementById('coopName').value = currentPaymentCoop.coop_name;
     const pinInput = document.getElementById('bookingPin');
     pinInput.value = currentPaymentCoop.pin || ''; pinInput.disabled = true; pinInput.classList.add('bg-gray-100');
     selectColor(currentPaymentCoop.coop_color);
-    document.getElementById('shirtSS').value = currentPaymentCoop.shirt_ss || '';
-    document.getElementById('shirtS').value = currentPaymentCoop.shirt_s || '';
-    document.getElementById('shirtM').value = currentPaymentCoop.shirt_m || '';
-    document.getElementById('shirtL').value = currentPaymentCoop.shirt_l || '';
-    document.getElementById('shirtXL').value = currentPaymentCoop.shirt_xl || '';
-    document.getElementById('shirt2XL').value = currentPaymentCoop.shirt_2xl || '';
-    document.getElementById('shirt3XL').value = currentPaymentCoop.shirt_3xl || '';
-    document.getElementById('shirt4XL').value = currentPaymentCoop.shirt_4xl || '';
-    document.getElementById('shirt5XL').value = currentPaymentCoop.shirt_5xl || '';
-    document.getElementById('shirt6XL').value = currentPaymentCoop.shirt_6xl || '';
-    document.getElementById('shirt7XL').value = currentPaymentCoop.shirt_7xl || '';
-    document.getElementById('shirtSpecial').value = currentPaymentCoop.shirt_special || '';
-    document.getElementById('flowerCount').value = currentPaymentCoop.flower_count || '';
-    document.getElementById('tableCount').value = currentPaymentCoop.table_count || '';
+
+    // Populate dynamic items
+    if (currentPaymentCoop.items && Array.isArray(currentPaymentCoop.items)) {
+        // First reset all dynamic inputs to 0/empty
+        document.querySelectorAll('.activity-input').forEach(input => input.value = '');
+        
+        currentPaymentCoop.items.forEach(item => {
+            const section = document.querySelector(`.activity-section[data-activity-id="${item.activity_id}"]`);
+            if (section) {
+                if (item.option) {
+                    const input = section.querySelector(`.activity-input[data-option="${item.option}"]`);
+                    if (input) input.value = item.quantity;
+                } else {
+                    const input = section.querySelector(`.activity-input`);
+                    if (input) input.value = item.quantity;
+                }
+            }
+        });
+    }
+
     document.getElementById('sponsorAmount').value = currentPaymentCoop.sponsor_amount || '';
     switchTab('booking'); showToast('เริ่มแก้ไขข้อมูลได้', 'success');
 }
@@ -445,28 +663,97 @@ function loadPaymentInfo(coopId) { if (!coopId && currentPaymentCoop) coopId = c
 
 function renderPaymentInfo() {
     if (!currentPaymentCoop) return;
-    const totalShirts = (currentPaymentCoop.shirt_ss || 0) + (currentPaymentCoop.shirt_s || 0) + (currentPaymentCoop.shirt_m || 0) + (currentPaymentCoop.shirt_l || 0) + (currentPaymentCoop.shirt_xl || 0) + (currentPaymentCoop.shirt_2xl || 0) + (currentPaymentCoop.shirt_3xl || 0) + (currentPaymentCoop.shirt_4xl || 0) + (currentPaymentCoop.shirt_5xl || 0) + (currentPaymentCoop.shirt_6xl || 0) + (currentPaymentCoop.shirt_7xl || 0) + (currentPaymentCoop.shirt_special || 0);
-    const colorNameFull = { 'green': '🟢 สีเขียว', 'blue': '🔵 สีฟ้า', 'purple': '🟣 สีม่วง', 'pink': '💗 สีชมพู' };
-    let shirtDetailsHTML = '';
-    if (currentPaymentCoop.shirt_ss > 0) shirtDetailsHTML += `<p class="ml-4">• SS: ${currentPaymentCoop.shirt_ss} ตัว</p>`;
-    if (currentPaymentCoop.shirt_s > 0) shirtDetailsHTML += `<p class="ml-4">• S: ${currentPaymentCoop.shirt_s} ตัว</p>`;
-    if (currentPaymentCoop.shirt_m > 0) shirtDetailsHTML += `<p class="ml-4">• M: ${currentPaymentCoop.shirt_m} ตัว</p>`;
-    if (currentPaymentCoop.shirt_l > 0) shirtDetailsHTML += `<p class="ml-4">• L: ${currentPaymentCoop.shirt_l} ตัว</p>`;
-    if (currentPaymentCoop.shirt_xl > 0) shirtDetailsHTML += `<p class="ml-4">• XL: ${currentPaymentCoop.shirt_xl} ตัว</p>`;
-    if (currentPaymentCoop.shirt_2xl > 0) shirtDetailsHTML += `<p class="ml-4">• 2XL: ${currentPaymentCoop.shirt_2xl} ตัว</p>`;
-    if (currentPaymentCoop.shirt_3xl > 0) shirtDetailsHTML += `<p class="ml-4">• 3XL: ${currentPaymentCoop.shirt_3xl} ตัว</p>`;
-    if (currentPaymentCoop.shirt_4xl > 0) shirtDetailsHTML += `<p class="ml-4">• 4XL: ${currentPaymentCoop.shirt_4xl} ตัว</p>`;
-    if (currentPaymentCoop.shirt_5xl > 0) shirtDetailsHTML += `<p class="ml-4">• 5XL: ${currentPaymentCoop.shirt_5xl} ตัว</p>`;
-    if (currentPaymentCoop.shirt_6xl > 0) shirtDetailsHTML += `<p class="ml-4">• 6XL: ${currentPaymentCoop.shirt_6xl} ตัว</p>`;
-    if (currentPaymentCoop.shirt_7xl > 0) shirtDetailsHTML += `<p class="ml-4">• 7XL: ${currentPaymentCoop.shirt_7xl} ตัว</p>`;
-    if (currentPaymentCoop.shirt_special > 0) shirtDetailsHTML += `<p class="ml-4 text-purple-600">• ไซร์พิเศษ: ${currentPaymentCoop.shirt_special} ตัว</p>`;
+    
+    const color = window.availableColors.find(c => c.id === currentPaymentCoop.coop_color);
+    const colorDisplayName = color ? `${color.emoji || ''} ${color.name}` : currentPaymentCoop.coop_color;
+    
+    let itemsHTML = '';
+    let itemsSubtotal = 0;
+
+    if (currentPaymentCoop.items && Array.isArray(currentPaymentCoop.items)) {
+        currentPaymentCoop.items.forEach(item => {
+            const activity = window.availableActivities.find(a => a.id === item.activity_id);
+            const actName = activity ? activity.name : item.activity_id;
+            const lineTotal = item.quantity * item.price;
+            itemsSubtotal += lineTotal;
+            
+            itemsHTML += `
+                <div class="flex justify-between items-start py-1 border-b border-gray-50 last:border-0 text-sm">
+                    <div>
+                        <span class="font-bold text-gray-700">${actName}</span>
+                        ${item.option ? `<span class="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded ml-1 uppercase font-mono">${item.option}</span>` : ''}
+                        <p class="text-xs text-gray-400">${item.quantity} x ${item.price.toLocaleString()} บาท</p>
+                    </div>
+                    <div class="font-bold text-gray-800">${lineTotal.toLocaleString()}</div>
+                </div>
+            `;
+        });
+    }
+
     const sponsorAmount = currentPaymentCoop.sponsor_amount || 0;
-    let detailsHTML = `<p class="text-xs text-gray-500 mb-2">Booking ID: ${currentPaymentCoop.id}</p><p><strong>สหกรณ์:</strong> ${currentPaymentCoop.coop_name}</p><p><strong>สีทีม:</strong> ${colorNameFull[currentPaymentCoop.coop_color]}</p><p><strong>เสื้อกีฬา:</strong> รวม ${totalShirts} ตัว × 300 บาท = ${(totalShirts * 300).toLocaleString()} บาท</p>${shirtDetailsHTML}<p><strong>พานพุ่ม:</strong> ${currentPaymentCoop.flower_count} พาน × 600 บาท = ${(currentPaymentCoop.flower_count * 600).toLocaleString()} บาท</p><p><strong>โต๊ะจีน:</strong> ${currentPaymentCoop.table_count} โต๊ะ × 3,000 บาท = ${(currentPaymentCoop.table_count * 3000).toLocaleString()} บาท</p>${sponsorAmount > 0 ? `<p><strong>เงินสนับสนุน:</strong> <span class="text-green-600">+${sponsorAmount.toLocaleString()} บาท</span></p>` : ''}`;
+    
+    let detailsHTML = `
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-mono">ID: ${currentPaymentCoop.id}</span>
+                <span class="text-xs font-bold ${currentPaymentCoop.payment_status === 'ชำระแล้ว' ? 'text-green-600' : 'text-amber-600'} flex items-center gap-1">
+                    ${currentPaymentCoop.payment_status === 'ชำระแล้ว' ? '✅' : '⏳'} ${currentPaymentCoop.payment_status}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2">
+                <p class="text-sm font-medium text-gray-400 uppercase tracking-widest">ชื่อสหกรณ์</p>
+                <p class="text-xl font-extrabold text-gray-900 border-l-4 border-indigo-500 pl-3">${currentPaymentCoop.coop_name}</p>
+                <p class="text-sm font-bold text-gray-700 flex items-center gap-2 mt-1">
+                    <span class="text-gray-400 font-normal">ทีม:</span> ${colorDisplayName}
+                </p>
+            </div>
+
+            <div class="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
+                <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">สรุปรายการจอง</p>
+                <div class="space-y-1">
+                    ${itemsHTML || '<p class="text-center py-2 text-gray-400 italic">ไม่มีรายการ</p>'}
+                </div>
+                
+                ${sponsorAmount > 0 ? `
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-indigo-100">
+                    <p class="text-sm font-bold text-green-700">เงินสนับสนุนกิจกรรม</p>
+                    <p class="font-bold text-green-700">+ ${sponsorAmount.toLocaleString()}</p>
+                </div>` : ''}
+            </div>
+        </div>
+    `;
+
     document.getElementById('modalPaymentDetails').innerHTML = detailsHTML;
     document.getElementById('modalTotalPayment').textContent = currentPaymentCoop.total_amount.toLocaleString();
     document.getElementById('paymentDetailModal').classList.remove('hidden');
-    if (isAdmin) { document.getElementById('uploadSection').classList.add('hidden'); document.getElementById('adminStatusSection').classList.remove('hidden'); document.getElementById('adminSlipSection').classList.remove('hidden'); if (currentPaymentCoop.proof_url) { const proofs = currentPaymentCoop.proof_url.split(',').filter(url => url.trim() !== ''); document.getElementById('slipDisplay').innerHTML = `<button onclick="openGallery('${currentPaymentCoop.proof_url}')" class="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2">📷 ดูหลักฐานการโอน (${proofs.length} รูป)</button>`; } else { document.getElementById('slipDisplay').textContent = "ยังไม่มีการแนบหลักฐาน"; } updateStatusButtons(currentPaymentCoop.payment_status); }
-    else { document.getElementById('uploadSection').classList.remove('hidden'); document.getElementById('adminStatusSection').classList.add('hidden'); document.getElementById('adminSlipSection').classList.add('hidden'); const editBtn = document.getElementById('editBookingBtn'); const cancelBtn = document.getElementById('cancelBookingBtn'); if (currentPaymentCoop.payment_status === 'รอชำระ' && !currentPaymentCoop.proof_url) { editBtn.classList.remove('hidden'); cancelBtn.classList.remove('hidden'); } else { editBtn.classList.add('hidden'); cancelBtn.classList.add('hidden'); } }
+    
+    // Admin features logic...
+    if (isAdmin) { 
+        document.getElementById('uploadSection').classList.add('hidden'); 
+        document.getElementById('adminStatusSection').classList.remove('hidden'); 
+        document.getElementById('adminSlipSection').classList.remove('hidden'); 
+        if (currentPaymentCoop.proof_url) { 
+            const proofs = currentPaymentCoop.proof_url.split(',').filter(url => url.trim() !== ''); 
+            document.getElementById('slipDisplay').innerHTML = `<button onclick="openGallery('${currentPaymentCoop.proof_url}')" class="text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 flex items-center gap-2 transition-all hover:scale-105">📸 ตรวจสอบหลักฐาน (${proofs.length})</button>`; 
+        } else { 
+            document.getElementById('slipDisplay').innerHTML = `<div class="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-400 italic text-sm">ยังไม่มีการแนบหลักฐาน</div>`; 
+        } 
+        updateStatusButtons(currentPaymentCoop.payment_status); 
+    } else { 
+        document.getElementById('uploadSection').classList.remove('hidden'); 
+        document.getElementById('adminStatusSection').classList.add('hidden'); 
+        document.getElementById('adminSlipSection').classList.add('hidden'); 
+        const editBtn = document.getElementById('editBookingBtn'); 
+        const cancelBtn = document.getElementById('cancelBookingBtn'); 
+        if ((currentPaymentCoop.payment_status === 'รอชำระ' || currentPaymentCoop.payment_status === 'รอตรวจสอบ') && !currentPaymentCoop.proof_url) { 
+            editBtn.classList.remove('hidden'); 
+            cancelBtn.classList.remove('hidden'); 
+        } else { 
+            editBtn.classList.add('hidden'); 
+            cancelBtn.classList.add('hidden'); 
+        } 
+    }
 }
 
 // ===== Gallery =====
@@ -564,120 +851,160 @@ function parseBookingDate(id) {
 }
 
 function updateSummaryTab() {
-    // === สรุปข้อมูลทั้งหมด (All Bookings) ===
+    // === สรุปข้อมูลกิจกรรมทั้งหมด (Dynamic Summary Data) ===
     window.summaryData = {
-        all: { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 },
-        paid: { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 },
-        pending: { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 }
+        all: { coops: new Set(), activities: {}, revenue: 0, sponsor: 0 },
+        paid: { coops: new Set(), activities: {}, revenue: 0, sponsor: 0 },
+        pending: { coops: new Set(), activities: {}, revenue: 0, sponsor: 0 }
     };
+
+    // Initialize activity counters for each filter group
+    const initActivityStats = (obj) => {
+        window.availableActivities.forEach(act => {
+            obj.activities[act.id] = { total: 0, options: {} };
+            act.options.forEach(opt => obj.activities[act.id].options[opt] = 0);
+        });
+    };
+    initActivityStats(window.summaryData.all);
+    initActivityStats(window.summaryData.paid);
+    initActivityStats(window.summaryData.pending);
 
     // Date Range Filter Logic
     const startDateInput = document.getElementById('summaryStartDate');
     const endDateInput = document.getElementById('summaryEndDate');
-
-    let startDate = null;
-    let endDate = null;
-
-    // Parse Start Date (00:00:00)
-    if (startDateInput && startDateInput.value) {
-        const parts = startDateInput.value.split('-');
-        if (parts.length === 3) {
-            startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
-        }
+    let startDate = null, endDate = null;
+    if (startDateInput?.value) {
+        const p = startDateInput.value.split('-');
+        startDate = new Date(p[0], p[1]-1, p[2], 0,0,0);
     }
-
-    // Parse End Date (23:59:59)
-    if (endDateInput && endDateInput.value) {
-        const parts = endDateInput.value.split('-');
-        if (parts.length === 3) {
-            endDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
-        }
+    if (endDateInput?.value) {
+        const p = endDateInput.value.split('-');
+        endDate = new Date(p[0], p[1]-1, p[2], 23,59,59);
     }
 
     allBookings.forEach(booking => {
         // Date Filtering
         if (startDate || endDate) {
-            const bookingDate = parseBookingDate(booking.id);
-            if (bookingDate) {
-                // Check Start Date
-                if (startDate && bookingDate < startDate) return;
-                // Check End Date
-                if (endDate && bookingDate > endDate) return;
-            } else {
-                return;
-            }
+            const bDate = parseBookingDate(booking.id);
+            if (!bDate || (startDate && bDate < startDate) || (endDate && bDate > endDate)) return;
         }
 
         const normalizedName = normalizeCoopName(booking.coop_name);
-        const bookingShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0) + (booking.shirt_special || 0);
-
-        // All Bookings Summary
-        window.summaryData.all.coops.add(normalizedName);
-        window.summaryData.all.shirts += bookingShirts;
-        window.summaryData.all.flowers += booking.flower_count || 0;
-        window.summaryData.all.tables += booking.table_count || 0;
-        window.summaryData.all.sponsor += booking.sponsor_amount || 0;
-        window.summaryData.all.revenue += booking.total_amount || 0;
-
-        if (booking.payment_status === 'ชำระแล้ว') {
-            // Paid Summary
-            window.summaryData.paid.coops.add(normalizedName);
-            window.summaryData.paid.shirts += bookingShirts;
-            window.summaryData.paid.flowers += booking.flower_count || 0;
-            window.summaryData.paid.tables += booking.table_count || 0;
-            window.summaryData.paid.sponsor += booking.sponsor_amount || 0;
-            window.summaryData.paid.revenue += booking.total_amount || 0;
-        } else {
-            // Pending Summary (รอชำระ, รอตรวจสอบ)
-            window.summaryData.pending.coops.add(normalizedName);
-            window.summaryData.pending.shirts += bookingShirts;
-            window.summaryData.pending.flowers += booking.flower_count || 0;
-            window.summaryData.pending.tables += booking.table_count || 0;
-            window.summaryData.pending.sponsor += booking.sponsor_amount || 0;
-            window.summaryData.pending.revenue += booking.total_amount || 0;
-        }
+        const group = booking.payment_status === 'ชำระแล้ว' ? window.summaryData.paid : window.summaryData.pending;
+        
+        // Add to both specific group and 'all'
+        [window.summaryData.all, group].forEach(stats => {
+            stats.coops.add(normalizedName);
+            stats.revenue += booking.total_amount || 0;
+            stats.sponsor += booking.sponsor_amount || 0;
+            
+            // Dynamic Item Accumulation
+            if (booking.items && Array.isArray(booking.items)) {
+                booking.items.forEach(item => {
+                    const actStats = stats.activities[item.activity_id];
+                    if (actStats) {
+                        actStats.total += item.quantity;
+                        if (item.option && actStats.options.hasOwnProperty(item.option)) {
+                            actStats.options[item.option] += item.quantity;
+                        }
+                    }
+                });
+            }
+        });
     });
 
-    // Update summary cards based on dropdown filter
     updateSummaryCards();
-
-    // Update shirt summary based on dropdown filter
     updateShirtSummary();
 
-    const bookingIdHeader = document.getElementById('bookingIdHeader');
-    const distributionHeader = document.getElementById('distributionHeader');
-    const pdfExportHeader = document.getElementById('pdfExportHeader');
+    // Show/Hide Admin Columns
+    const isAdminUI = (elId, show) => {
+        const el = document.getElementById(elId);
+        if (el) show ? el.classList.remove('hidden') : el.classList.add('hidden');
+    };
+    isAdminUI('bookingIdHeader', isAdmin);
+    isAdminUI('distributionHeader', isAdmin);
+    isAdminUI('pdfExportHeader', isAdmin);
 
-    if (isAdmin) {
-        bookingIdHeader.classList.remove('hidden');
-        distributionHeader.classList.remove('hidden');
-        if (pdfExportHeader) pdfExportHeader.classList.remove('hidden');
-    } else {
-        bookingIdHeader.classList.add('hidden');
-        distributionHeader.classList.add('hidden');
-        if (pdfExportHeader) pdfExportHeader.classList.add('hidden');
+    const tbody = document.getElementById('summaryTableBody'); 
+    tbody.innerHTML = '';
+    
+    let filtered = allBookings; 
+    if (summarySearchQuery) filtered = allBookings.filter(b => matchSearchQuery(b, summarySearchQuery));
+    
+    const statusOrder = { 'รอชำระ': 1, 'รอตรวจสอบ': 2, 'ชำระแล้ว': 3 };
+    filtered.sort((a, b) => {
+        const sA = statusOrder[a.payment_status] || 999;
+        const sB = statusOrder[b.payment_status] || 999;
+        if (sA !== sB) return sA - sB;
+        return (a.coop_name || "").localeCompare(b.coop_name || "");
+    });
+
+    const totalPages = Math.ceil(filtered.length / CONFIG.ITEMS_PER_PAGE); 
+    if (summaryCurrentPage > totalPages) summaryCurrentPage = totalPages || 1;
+    const paginated = filtered.slice((summaryCurrentPage - 1) * CONFIG.ITEMS_PER_PAGE, summaryCurrentPage * CONFIG.ITEMS_PER_PAGE);
+    
+    document.getElementById('summaryPageInfo').textContent = `หน้า ${summaryCurrentPage} จาก ${totalPages || 1}`;
+    document.getElementById('summaryPrevBtn').disabled = summaryCurrentPage === 1;
+    document.getElementById('summaryNextBtn').disabled = summaryCurrentPage >= totalPages;
+    
+    const paginDiv = document.getElementById('summaryPagination');
+    filtered.length <= CONFIG.ITEMS_PER_PAGE ? paginDiv.classList.add('hidden') : paginDiv.classList.remove('hidden');
+
+    if (paginated.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center py-8 text-gray-400 italic">ไม่พบข้อมูลที่ตรงตามเงื่อนไข</td></tr>`;
+        return;
     }
 
-    const tbody = document.getElementById('summaryTableBody'); tbody.innerHTML = '';
-    let filteredBookings = allBookings; if (summarySearchQuery) filteredBookings = allBookings.filter(b => matchSearchQuery(b, summarySearchQuery));
-    const statusOrder = { 'รอชำระ': 1, 'รอตรวจสอบ': 2, 'ชำระแล้ว': 3 };
-    const sortedBookings = [...filteredBookings].sort((a, b) => { const statusA = statusOrder[a.payment_status] || 999; const statusB = statusOrder[b.payment_status] || 999; if (statusA !== statusB) return statusA - statusB; if (a.coop_color < b.coop_color) return -1; if (a.coop_color > b.coop_color) return 1; return String(a.coop_name || "").localeCompare(String(b.coop_name || "")); });
-    const totalPages = Math.ceil(sortedBookings.length / CONFIG.ITEMS_PER_PAGE); if (summaryCurrentPage > totalPages) summaryCurrentPage = totalPages || 1; if (summaryCurrentPage < 1) summaryCurrentPage = 1;
-    const paginatedBookings = sortedBookings.slice((summaryCurrentPage - 1) * CONFIG.ITEMS_PER_PAGE, summaryCurrentPage * CONFIG.ITEMS_PER_PAGE);
-    document.getElementById('summaryPageInfo').textContent = `หน้า ${summaryCurrentPage} จาก ${totalPages || 1}`; document.getElementById('summaryPrevBtn').disabled = summaryCurrentPage === 1; document.getElementById('summaryNextBtn').disabled = summaryCurrentPage >= totalPages;
-    const paginationDiv = document.getElementById('summaryPagination'); if (sortedBookings.length <= CONFIG.ITEMS_PER_PAGE) paginationDiv.classList.add('hidden'); else paginationDiv.classList.remove('hidden');
-    if (paginatedBookings.length === 0) { tbody.innerHTML = `<tr><td colspan="11" class="text-center py-4 text-gray-500">ไม่พบข้อมูล</td></tr>`; return; }
-    const colorNameFull = { 'green': '🟢 สีเขียว', 'blue': '🔵 สีฟ้า', 'purple': '🟣 สีม่วง', 'pink': '💗 สีชมพู' };
-    paginatedBookings.forEach(booking => {
-        const totalShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0) + (booking.shirt_special || 0);
-        const sponsorAmount = booking.sponsor_amount || 0;
-        let statusColor = 'bg-yellow-100 text-yellow-700'; if (booking.payment_status === 'ชำระแล้ว') statusColor = 'bg-green-100 text-green-700'; else if (booking.payment_status === 'รอตรวจสอบ') statusColor = 'bg-blue-100 text-blue-700';
-        const distributionStatus = booking.distribution_status || 'ยังไม่แจก'; const isDistributed = distributionStatus === 'แจกแล้ว'; const distributionBadgeColor = isDistributed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'; const distributionIcon = isDistributed ? '✅' : '⏳';
-        const row = document.createElement('tr'); row.className = 'hover:bg-gray-50';
-        row.innerHTML = `<td class="border px-4 py-2">${booking.coop_name}</td><td class="border px-4 py-2 text-center">${colorNameFull[booking.coop_color]}</td><td class="border px-4 py-2 text-center">${totalShirts}</td><td class="border px-4 py-2 text-center">${booking.flower_count || 0}</td><td class="border px-4 py-2 text-center">${booking.table_count || 0}</td><td class="border px-4 py-2 text-center ${sponsorAmount > 0 ? 'text-green-600' : ''}">${sponsorAmount > 0 ? sponsorAmount.toLocaleString() : '-'}</td><td class="border px-4 py-2 text-center font-semibold">${(booking.total_amount || 0).toLocaleString()}</td><td class="border px-4 py-2 text-center"><button onclick="showSizeDetail('${booking.id}')" class="bg-indigo-100 text-indigo-600 hover:bg-indigo-200 p-2 rounded-full transition-colors" title="ดูรายละเอียดไซส์">👕</button></td><td class="border px-4 py-2 text-center"><span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">${booking.payment_status}</span></td>
-        <td class="border px-4 py-2 text-center font-mono text-sm text-gray-600 ${isAdmin ? '' : 'hidden'}"><div>${booking.id}</div>${booking.proof_url ? `<button onclick="openGallery('${booking.proof_url}')" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded mt-1 inline-flex items-center gap-1">📄 สลิป</button>` : ''}</td>
-        <td class="border px-4 py-2 text-center ${isAdmin ? '' : 'hidden'}"><button onclick="generateCoopPDF('${booking.id}')" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-full text-sm font-medium transition-colors">📄 PDF</button></td>
-        <td class="border px-4 py-2 text-center ${isAdmin ? '' : 'hidden'}"><label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" ${isDistributed ? 'checked' : ''} onchange="toggleDistributionStatus('${booking.id}', this.checked)" class="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500"><span class="px-2 py-1 rounded-full text-xs font-medium ${distributionBadgeColor}">${distributionIcon} ${distributionStatus}</span></label></td>`;
+    paginated.forEach(booking => {
+        // Calculate dynamic totals for the table
+        let shirtTotal = 0, flowerTotal = 0, tableTotal = 0;
+        if (booking.items) {
+            booking.items.forEach(it => {
+                if (it.activity_id === 'SHIRT') shirtTotal += it.quantity;
+                else if (it.activity_id === 'FLOWER') flowerTotal += it.quantity;
+                else if (it.activity_id === 'TABLE') tableTotal += it.quantity;
+            });
+        }
+
+        const colorObj = window.availableColors.find(c => c.id === booking.coop_color);
+        const colorName = colorObj ? `${colorObj.emoji || ''} ${colorObj.name}` : booking.coop_color;
+        
+        let statusColor = 'bg-yellow-100 text-yellow-700'; 
+        if (booking.payment_status === 'ชำระแล้ว') statusColor = 'bg-green-100 text-green-700'; 
+        else if (booking.payment_status === 'รอตรวจสอบ') statusColor = 'bg-blue-100 text-blue-700';
+        
+        const isDist = booking.distribution_status === 'แจกแล้ว';
+        const distBadge = isDist ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
+        
+        const row = document.createElement('tr'); 
+        row.className = 'hover:bg-indigo-50/30 transition-colors';
+        row.innerHTML = `
+            <td class="border px-4 py-3 font-medium">${booking.coop_name}</td>
+            <td class="border px-4 py-3 text-center text-sm">${colorName}</td>
+            <td class="border px-4 py-3 text-center font-bold text-indigo-600">${shirtTotal}</td>
+            <td class="border px-4 py-3 text-center">${flowerTotal}</td>
+            <td class="border px-4 py-3 text-center">${tableTotal}</td>
+            <td class="border px-4 py-3 text-center ${booking.sponsor_amount > 0 ? 'text-green-600 font-bold' : 'text-gray-300'}">${booking.sponsor_amount ? booking.sponsor_amount.toLocaleString() : '-'}</td>
+            <td class="border px-4 py-3 text-center font-extrabold text-gray-900">${(booking.total_amount || 0).toLocaleString()}</td>
+            <td class="border px-4 py-3 text-center">
+                <button onclick="showSizeDetail('${booking.id}')" class="bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white p-2 rounded-xl transition-all shadow-sm" title="ดูรายละเอียดรายการ">👕</button>
+            </td>
+            <td class="border px-4 py-3 text-center">
+                <span class="px-3 py-1 rounded-full text-xs font-bold border ${statusColor}">${booking.payment_status}</span>
+            </td>
+            <td class="border px-4 py-3 text-center font-mono text-[10px] text-gray-400 ${isAdmin ? '' : 'hidden'}">
+                <div>${booking.id}</div>
+                ${booking.proof_url ? `<button onclick="openGallery('${booking.proof_url}')" class="text-[10px] bg-white border border-gray-200 text-indigo-600 px-2 py-0.5 rounded mt-1 hover:bg-indigo-50 transition-colors">📄 ดูสลิป</button>` : ''}
+            </td>
+            <td class="border px-4 py-3 text-center ${isAdmin ? '' : 'hidden'}">
+                <button onclick="generateCoopPDF('${booking.id}')" class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all border border-red-100">📄 PDF</button>
+            </td>
+            <td class="border px-4 py-3 text-center ${isAdmin ? '' : 'hidden'}">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" ${isDist ? 'checked' : ''} onchange="toggleDistributionStatus('${booking.id}', this.checked)" class="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 border-gray-300">
+                    <span class="px-2 py-1 rounded-full text-[10px] font-bold ${distBadge}">${isDist ? '✅ แจกแล้ว' : '⏳ รอรับ'}</span>
+                </label>
+            </td>`;
         tbody.appendChild(row);
     });
 }
@@ -686,23 +1013,20 @@ function updateSummaryTab() {
 function updateSummaryCards() {
     const filterValue = document.getElementById('summaryFilter')?.value || 'all';
     const titleEl = document.getElementById('summaryCardsTitle');
-
-    // Update title based on filter
-    const titles = {
-        all: '📊 สรุปข้อมูลทั้งหมด',
-        paid: '✅ สรุปข้อมูลที่ชำระแล้ว',
-        pending: '⏳ สรุปข้อมูลที่รอชำระ'
-    };
+    const titles = { all: '📊 สรุปข้อมูลทั้งหมด', paid: '✅ สรุปข้อมูลที่ชำระแล้ว', pending: '⏳ สรุปข้อมูลที่รอชำระ' };
     if (titleEl) titleEl.textContent = titles[filterValue] || titles.all;
 
-    // Get data based on filter
-    const data = window.summaryData?.[filterValue] || { coops: new Set(), shirts: 0, flowers: 0, tables: 0, sponsor: 0, revenue: 0 };
+    const data = window.summaryData?.[filterValue] || { coops: new Set(), activities: {}, revenue: 0, sponsor: 0 };
+    
+    // Primary Activity (SHIRT)
+    const shirtStats = data.activities['SHIRT'] || { total: 0 };
+    const flowerStats = data.activities['FLOWER'] || { total: 0 };
+    const tableStats = data.activities['TABLE'] || { total: 0 };
 
-    // Update cards
     document.getElementById('cardCoops').textContent = data.coops.size;
-    document.getElementById('cardShirts').textContent = data.shirts;
-    document.getElementById('cardFlowers').textContent = data.flowers;
-    document.getElementById('cardTables').textContent = data.tables;
+    document.getElementById('cardShirts').textContent = shirtStats.total;
+    document.getElementById('cardFlowers').textContent = flowerStats.total;
+    document.getElementById('cardTables').textContent = tableStats.total;
     document.getElementById('cardSponsor').textContent = data.sponsor.toLocaleString();
     document.getElementById('cardRevenue').textContent = data.revenue.toLocaleString();
 }
@@ -710,128 +1034,104 @@ function updateSummaryCards() {
 // ===== Shirt Summary with Dropdown Filter =====
 function updateShirtSummary() {
     const filterValue = document.getElementById('shirtSummaryFilter')?.value || 'all';
+    const data = window.summaryData?.[filterValue] || { activities: {} };
+    
+    // Find SHIRT activity
+    const shirtAct = window.availableActivities.find(a => a.id === 'SHIRT');
+    if (!shirtAct) return;
 
-    // Size Counters
-    let countSS = 0, countS = 0, countM = 0, countL = 0, countXL = 0, count2XL = 0, count3XL = 0, count4XL = 0, count5XL = 0, count6XL = 0, count7XL = 0, countSpecial = 0;
+    // Accumulate by Color & Size
+    const colorResults = {};
+    window.availableColors.forEach(c => {
+        colorResults[c.id] = { total: 0, options: {} };
+        shirtAct.options.forEach(opt => colorResults[c.id].options[opt] = 0);
+    });
 
-    // Size Counters by Color
-    const sizesByColor = {
-        green: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0 },
-        blue: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0 },
-        purple: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0 },
-        pink: { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0 }
-    };
+    // Date/Filter filtering
+    let filtered = allBookings;
+    if (filterValue === 'paid') filtered = filtered.filter(b => b.payment_status === 'ชำระแล้ว');
+    else if (filterValue === 'pending') filtered = filtered.filter(b => b.payment_status !== 'ชำระแล้ว');
 
-    // Filter bookings based on dropdown selection
-    let filteredBookings = allBookings;
-    if (filterValue === 'paid') {
-        filteredBookings = allBookings.filter(b => b.payment_status === 'ชำระแล้ว');
-    } else if (filterValue === 'pending') {
-        filteredBookings = allBookings.filter(b => b.payment_status !== 'ชำระแล้ว');
-    }
-
-    // Apply Date Range Filter if selected
-    const startDateInput = document.getElementById('summaryStartDate');
-    const endDateInput = document.getElementById('summaryEndDate');
-
-    if ((startDateInput && startDateInput.value) || (endDateInput && endDateInput.value)) {
-        let startDate = null;
-        let endDate = null;
-
-        if (startDateInput && startDateInput.value) {
-            const parts = startDateInput.value.split('-');
-            startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
-        }
-
-        if (endDateInput && endDateInput.value) {
-            const parts = endDateInput.value.split('-');
-            endDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
-        }
-
-        filteredBookings = filteredBookings.filter(b => {
-            const bDate = parseBookingDate(b.id);
-            if (!bDate) return false; // Exclude if no valid date found
-
-            if (startDate && bDate < startDate) return false;
-            if (endDate && bDate > endDate) return false;
-
-            return true;
-        });
-    }
-
-    // Calculate totals
-    filteredBookings.forEach(booking => {
-        // Size breakdown
-        countSS += booking.shirt_ss || 0;
-        countS += booking.shirt_s || 0;
-        countM += booking.shirt_m || 0;
-        countL += booking.shirt_l || 0;
-        countXL += booking.shirt_xl || 0;
-        count2XL += booking.shirt_2xl || 0;
-        count3XL += booking.shirt_3xl || 0;
-        count4XL += booking.shirt_4xl || 0;
-        count5XL += booking.shirt_5xl || 0;
-        count6XL += booking.shirt_6xl || 0;
-        count7XL += booking.shirt_7xl || 0;
-        countSpecial += booking.shirt_special || 0;
-
-        // Accumulate Sizes by Color
-        const color = booking.coop_color;
-        if (sizesByColor[color]) {
-            sizesByColor[color].ss += booking.shirt_ss || 0;
-            sizesByColor[color].s += booking.shirt_s || 0;
-            sizesByColor[color].m += booking.shirt_m || 0;
-            sizesByColor[color].l += booking.shirt_l || 0;
-            sizesByColor[color].xl += booking.shirt_xl || 0;
-            sizesByColor[color]['2xl'] += booking.shirt_2xl || 0;
-            sizesByColor[color]['3xl'] += booking.shirt_3xl || 0;
-            sizesByColor[color]['4xl'] += booking.shirt_4xl || 0;
-            sizesByColor[color]['5xl'] += booking.shirt_5xl || 0;
-            sizesByColor[color]['6xl'] += booking.shirt_6xl || 0;
-            sizesByColor[color]['7xl'] += booking.shirt_7xl || 0;
-            sizesByColor[color].special += booking.shirt_special || 0;
+    // Apply Date Filter... (Optional reuse logic from updateSummaryTab)
+    
+    filtered.forEach(booking => {
+        if (booking.items) {
+            booking.items.forEach(it => {
+                if (it.activity_id === 'SHIRT' && colorResults[booking.coop_color]) {
+                    colorResults[booking.coop_color].options[it.option] += it.quantity;
+                    colorResults[booking.coop_color].total += it.quantity;
+                }
+            });
         }
     });
 
-    // Update size breakdown display
-    document.getElementById('totalSS').textContent = countSS;
-    document.getElementById('totalS').textContent = countS;
-    document.getElementById('totalM').textContent = countM;
-    document.getElementById('totalL').textContent = countL;
-    document.getElementById('totalXL').textContent = countXL;
-    document.getElementById('total2XL').textContent = count2XL;
-    document.getElementById('total3XL').textContent = count3XL;
-    document.getElementById('total4XL').textContent = count4XL;
-    document.getElementById('total5XL').textContent = count5XL;
-    document.getElementById('total6XL').textContent = count6XL;
-    document.getElementById('total7XL').textContent = count7XL;
-    document.getElementById('totalSpecial').textContent = countSpecial;
+    // Update UI - Grid Totals
+    shirtAct.options.forEach(opt => {
+        const total = Object.values(colorResults).reduce((sum, c) => sum + (c.options[opt] || 0), 0);
+        const el = document.getElementById('total' + opt);
+        if (el) el.textContent = total;
+    });
 
-    // Update Sizes by Color Table
-    const colors = ['green', 'blue', 'purple', 'pink'];
-    const sizes = ['SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL', 'Special'];
-    const sizeKeys = ['ss', 's', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl', 'special'];
-
-    colors.forEach(color => {
-        let colorTotal = 0;
-        sizeKeys.forEach((key, index) => {
-            const value = sizesByColor[color][key];
-            colorTotal += value;
-            const elementId = color + sizes[index];
-            const element = document.getElementById(elementId);
-            if (element) element.textContent = value;
+    // Update UI - Color Table
+    window.availableColors.forEach(color => {
+        shirtAct.options.forEach(opt => {
+            const elId = color.id + opt;
+            const el = document.getElementById(elId);
+            if (el) el.textContent = colorResults[color.id].options[opt] || 0;
         });
-        // Update total for this color
-        const totalElement = document.getElementById(color + 'Total');
-        if (totalElement) totalElement.textContent = colorTotal;
+        const totalEl = document.getElementById(color.id + 'Total');
+        if (totalEl) totalEl.textContent = colorResults[color.id].total;
     });
 }
 
 function showSizeDetail(id) {
-    const booking = allBookings.find(b => b.id == id); if (!booking) return;
-    const totalShirts = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) + (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) + (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0) + (booking.shirt_special || 0);
-    const html = `<div class="space-y-3"><div><p class="font-bold text-gray-700">${booking.coop_name}</p></div><div class="grid grid-cols-3 gap-2 text-sm"><div class="bg-gray-50 p-2 rounded flex justify-between"><span>SS:</span> <span class="font-bold">${booking.shirt_ss || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>S:</span> <span class="font-bold">${booking.shirt_s || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>M:</span> <span class="font-bold">${booking.shirt_m || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>L:</span> <span class="font-bold">${booking.shirt_l || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>XL:</span> <span class="font-bold">${booking.shirt_xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>2XL:</span> <span class="font-bold">${booking.shirt_2xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>3XL:</span> <span class="font-bold">${booking.shirt_3xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>4XL:</span> <span class="font-bold">${booking.shirt_4xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>5XL:</span> <span class="font-bold">${booking.shirt_5xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>6XL:</span> <span class="font-bold">${booking.shirt_6xl || 0}</span></div><div class="bg-gray-50 p-2 rounded flex justify-between"><span>7XL:</span> <span class="font-bold">${booking.shirt_7xl || 0}</span></div><div class="bg-purple-50 p-2 rounded flex justify-between"><span class="text-purple-600">พิเศษ:</span> <span class="font-bold text-purple-700">${booking.shirt_special || 0}</span></div></div><div class="mt-3 pt-3 border-t flex justify-between font-bold text-indigo-600"><span>รวมทั้งหมด:</span><span>${totalShirts} ตัว</span></div></div>`;
-    document.getElementById('sizeDetailContent').innerHTML = html; document.getElementById('sizeDetailModal').classList.remove('hidden');
+    const booking = allBookings.find(b => b.id == id); 
+    if (!booking) return;
+
+    let itemsHTML = '';
+    let shirtTotal = 0;
+
+    if (booking.items) {
+        booking.items.forEach(it => {
+            const activity = window.availableActivities.find(a => a.id === it.activity_id);
+            const actName = activity ? activity.name : it.activity_id;
+            if (it.activity_id === 'SHIRT') shirtTotal += it.quantity;
+
+            itemsHTML += `
+                <div class="flex justify-between items-center bg-gray-50/80 p-2.5 rounded-xl border border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        <span class="font-bold text-gray-700">${actName}</span>
+                        ${it.option ? `<span class="text-[10px] font-mono bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded uppercase">${it.option}</span>` : ''}
+                    </div>
+                    <div class="font-extrabold text-gray-900">${it.quantity}</div>
+                </div>
+            `;
+        });
+    }
+
+    const html = `
+        <div class="space-y-4">
+            <div class="border-l-4 border-indigo-500 pl-3">
+                <p class="text-xs text-gray-400 uppercase font-bold tracking-widest">สหกรณ์</p>
+                <p class="text-xl font-extrabold text-gray-800">${booking.coop_name}</p>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-2">
+                <p class="text-xs text-gray-400 uppercase font-bold tracking-widest mb-1">รายการที่สั่ง</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    ${itemsHTML || '<p class="text-center py-4 text-gray-400 italic">ไม่มีข้อมูลรายการ</p>'}
+                </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-dashed flex justify-between items-center">
+                <span class="text-sm font-bold text-gray-500 uppercase">รวมเสื้อทั้งหมด:</span>
+                <span class="text-2xl font-black text-indigo-600">${shirtTotal} <span class="text-sm font-normal">ตัว</span></span>
+            </div>
+        </div>`;
+    
+    document.getElementById('sizeDetailContent').innerHTML = html; 
+    document.getElementById('sizeDetailModal').classList.remove('hidden');
 }
 
 async function toggleDistributionStatus(id, isChecked) {
@@ -841,517 +1141,365 @@ async function toggleDistributionStatus(id, isChecked) {
     catch (error) { showLoading(false); showToast('Connection error: ' + error.message, 'error'); updateSummaryTab(); }
 }
 
+/**
+ * Generate PDF for a Single Cooperative Booking (Individual Copy)
+ * Refactored to support Dynamic Activities and Relational Items
+ */
 async function generateCoopPDF(coopId) {
     const booking = allBookings.find(b => b.id === coopId);
     if (!booking) return;
 
-    // คำนวณยอดรวม
-    const shirtTotal = (booking.shirt_ss || 0) + (booking.shirt_s || 0) + (booking.shirt_m || 0) + (booking.shirt_l || 0) +
-        (booking.shirt_xl || 0) + (booking.shirt_2xl || 0) + (booking.shirt_3xl || 0) + (booking.shirt_4xl || 0) +
-        (booking.shirt_5xl || 0) + (booking.shirt_6xl || 0) + (booking.shirt_7xl || 0) + (booking.shirt_special || 0);
+    // Use dynamic configuration from window.availableColors & window.availableActivities
+    const colorObj = window.availableColors.find(c => c.id === booking.coop_color);
+    const colorName = colorObj ? `${colorObj.emoji || ''} ${colorObj.name}` : booking.coop_color;
+    const colorHex = colorObj ? (colorObj.id === 'green' ? '#22c55e' : colorObj.id === 'blue' ? '#3b82f6' : colorObj.id === 'purple' ? '#a855f7' : '#ec4899') : '#374151';
 
-    const shirtPrice = shirtTotal * 300;
-    const flowerPrice = (booking.flower_count || 0) * 600;
-    const tablePrice = (booking.table_count || 0) * 3000;
-    const sponsorPrice = (booking.sponsor_amount || 0);
-    const totalPrice = shirtPrice + flowerPrice + tablePrice + sponsorPrice;
-
-    const colorNameFull = { 'green': '🟢 สีเขียว', 'blue': '🔵 สีฟ้า', 'purple': '🟣 สีม่วง', 'pink': '💗 สีชมพู' };
-
-    // วันที่ปัจจุบัน (พ.ศ.)
+    // Current Date (B.E.)
     const now = new Date();
-    const dateStr = `${now.getDate()}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear() + 543}`;
+    const dateStr = \`${now.getDate()}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear() + 543}\`;
 
-    // สร้าง template HTML (Compact Version - No Garuda, 1 Page Layout)
-    const pdfContent = `
-        <div id="pdf-content" style="font-family: 'Kanit', sans-serif; color: #000; padding: 40px; background: white; width: 794px; min-height: 1120px; box-sizing: border-box; position: relative;">
+    // Dynamic Activity Rendering
+    let sizeableItemsHTML = '';
+    let standardItemsHTML = '';
+    let grandTotal = 0;
+
+    window.availableActivities.forEach(act => {
+        const items = (booking.items || []).filter(it => it.activity_id === act.id);
+        if (items.length === 0) return;
+
+        let actSubtotal = 0;
+        items.forEach(it => {
+            actSubtotal += (it.quantity * it.price);
+            grandTotal += (it.quantity * it.price);
+        });
+
+        if (act.type === 'Sizeable') {
+            // Render as size-grid table (e.g. Shirts)
+            const half = Math.ceil(act.options.length / 2);
+            const leftCol = act.options.slice(0, half);
+            const rightCol = act.options.slice(half);
+
+            const renderCol = (opts) => opts.map(opt => {
+                const item = items.find(it => it.option === opt);
+                return generateItemRowPDF(opt, item ? item.quantity : 0, act.price);
+            }).join('');
+
+            sizeableItemsHTML += \`
+                <div style="margin-bottom: 25px; page-break-inside: avoid;">
+                    <h3 style="font-size: 16px; font-weight: bold; color: #374151; margin-bottom: 12px; border-left: 4px solid #6366f1; padding-left: 10px;">
+                        📦 \${act.name} (หน่วยละ \${act.price.toLocaleString()} บาท)
+                    </h3>
+                    <div style="display: flex; gap: 20px;">
+                        <div style="flex: 1;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                    <th style="padding: 10px; text-align: left;">ตัวเลือก</th>
+                                    <th style="padding: 10px; text-align: center;">จำนวน</th>
+                                    <th style="padding: 10px; text-align: right;">บาท</th>
+                                </tr>
+                                \${renderCol(leftCol)}
+                            </table>
+                        </div>
+                        <div style="flex: 1;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                    <th style="padding: 10px; text-align: left;">ตัวเลือก</th>
+                                    <th style="padding: 10px; text-align: center;">จำนวน</th>
+                                    <th style="padding: 10px; text-align: right;">บาท</th>
+                                </tr>
+                                \${renderCol(rightCol)}
+                            </table>
+                        </div>
+                    </div>
+                </div>\`;
+        } else {
+            // Render as a standard item row (e.g. Flowers, Tables)
+            const totalQty = items.reduce((sum, it) => sum + it.quantity, 0);
+            standardItemsHTML += \`
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 12px 0; font-weight: 500;">\${act.name} (\${act.price.toLocaleString()} บ.)</td>
+                    <td style="padding: 12px 0; text-align: center;">\${totalQty} หน่วย</td>
+                    <td style="padding: 12px 0; text-align: right; font-weight: bold; color: #1e293b;">\${actSubtotal.toLocaleString()}</td>
+                </tr>\`;
+        }
+    });
+
+    // Add Sponsor Amount separately
+    grandTotal += (booking.sponsor_amount || 0);
+
+    const pdfContent = \`
+        <div id="pdf-content" style="font-family: 'Kanit', sans-serif; color: #1e293b; padding: 40px; background: white; width: 730px; min-height: 1000px; box-sizing: border-box; position: relative;">
             
-            <!-- Header -->
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="font-size: 24px; font-weight: bold; margin: 0; line-height: 1.2;">ใบสรุปการสั่งจองเสื้องานวันสหกรณ์แห่งชาติ</h1>
-                <h2 style="font-size: 18px; font-weight: normal; margin: 5px 0 0 0;">ประจำปี พ.ศ. 2569</h2>
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h1 style="font-size: 24px; font-weight: 900; color: #111827; margin: 0; line-height: 1.2;">ใบสรุปการสั่งจองและลงทะเบียน</h1>
+                <h2 style="font-size: 14px; font-weight: 500; color: #64748b; margin: 5px 0 0 0;">งานวันสหกรณ์แห่งชาติ \${window.activeEvent?.name || ''}</h2>
             </div>
 
-            <div style="border-bottom: 3px solid #22c55e; margin-bottom: 25px;"></div>
+            <div style="border-bottom: 4px solid #22c55e; margin-bottom: 25px;"></div>
 
-            <!-- Coop Info -->
-            <div style="background-color: #f9fafb; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                <table style="width: 100%; border-collapse: separate; border-spacing: 0 8px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                <table style="width: 100%; border-collapse: collapse;">
                     <tr>
-                        <td style="width: 120px; font-weight: 600; color: #374151; font-size: 16px;">ชื่อสหกรณ์:</td>
-                        <td style="font-size: 18px; font-weight: bold; color: #111827;">${booking.coop_name}</td>
+                        <td style="width: 120px; font-weight: 700; color: #64748b;">ชื่อสหกรณ์:</td>
+                        <td style="font-size: 18px; font-weight: 950;">\${booking.coop_name}</td>
                     </tr>
                     <tr>
-                        <td style="font-weight: 600; color: #374151; font-size: 16px;">สีทีมกีฬา:</td>
-                        <td>
-                            <span style="display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 16px; font-weight: 500; color: white; background-color: ${booking.coop_color === 'green' ? '#22c55e' : booking.coop_color === 'blue' ? '#3b82f6' : booking.coop_color === 'purple' ? '#a855f7' : '#ec4899'};">
-                                ${colorNameFull[booking.coop_color]}
-                            </span>
-                        </td>
+                        <td style="font-weight: 700; color: #64748b;">สีทีมกีฬา:</td>
+                        <td><span style="background-color: \${colorHex}; color: white; padding: 3px 12px; border-radius: 99px; font-weight: 800;">\${colorName}</span></td>
                     </tr>
-                    <tr>
-                        <td style="padding: 5px 0; font-weight: 600; color: #374151; font-size: 16px;">Booking ID:</td>
-                        <td style="padding: 5px 0; font-family: monospace; color: #6b7280; font-size: 16px;">${booking.id}</td>
-                    </tr>
+                    <tr><td style="font-weight: 700; color: #64748b;">ID การจอง:</td><td style="font-family: monospace;">#\${booking.id}</td></tr>
                 </table>
             </div>
 
-            <!-- Shirt Details -->
-            <div style="margin-bottom: 20px;">
-                <h3 style="font-size: 16px; font-weight: bold; color: #374151; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                    📦 รายละเอียดเสื้อที่สั่ง (ตัวละ 300 บาท)
-                </h3>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <!-- Column 1 -->
-                    <div>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                            <thead>
-                                <tr style="background-color: #f3f4f6;">
-                                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb;">ไซส์</th>
-                                    <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb;">จำนวน</th>
-                                    <th style="padding: 8px; text-align: right; border: 1px solid #e5e7eb;">บาท</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${generateShirtRowPDF('SS', booking.shirt_ss)}
-                                ${generateShirtRowPDF('S', booking.shirt_s)}
-                                ${generateShirtRowPDF('M', booking.shirt_m)}
-                                ${generateShirtRowPDF('L', booking.shirt_l)}
-                                ${generateShirtRowPDF('XL', booking.shirt_xl)}
-                                ${generateShirtRowPDF('2XL', booking.shirt_2xl)}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Column 2 -->
-                    <div>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                            <thead>
-                                <tr style="background-color: #f3f4f6;">
-                                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb;">ไซส์</th>
-                                    <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb;">จำนวน</th>
-                                    <th style="padding: 8px; text-align: right; border: 1px solid #e5e7eb;">บาท</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${generateShirtRowPDF('3XL', booking.shirt_3xl)}
-                                ${generateShirtRowPDF('4XL', booking.shirt_4xl)}
-                                ${generateShirtRowPDF('5XL', booking.shirt_5xl)}
-                                ${generateShirtRowPDF('6XL', booking.shirt_6xl)}
-                                ${generateShirtRowPDF('7XL', booking.shirt_7xl)}
-                                ${generateShirtRowPDF('ไซร์พิเศษ', booking.shirt_special)}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            \${sizeableItemsHTML}
 
-                <!-- Total Shirts Summary -->
-                <div style="margin-top: 10px; padding: 10px; background-color: #f3f4f6; border-radius: 6px; text-align: right; font-weight: bold; font-size: 14px;">
-                    รวมเสื้อทั้งหมด <span style="font-size: 16px; color: #111827;">${shirtTotal}</span> ตัว 
-                    <span style="margin: 0 10px; color: #d1d5db;">|</span>
-                    รวมเป็นเงิน <span style="font-size: 16px; color: #111827;">${shirtPrice.toLocaleString()}</span> บาท
-                </div>
-            </div>
-
-            <!-- Other Items & Grand Total Block -->
-            <div style="display: flex; gap: 20px; align-items: flex-start;">
-                
-                <!-- Other Items -->
-                <div style="flex: 1;">
-                    <h3 style="font-size: 16px; font-weight: bold; color: #374151; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                        🎁 รายการอื่นๆ
-                    </h3>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                        <tr style="border-bottom: 1px solid #f3f4f6;">
-                            <td style="padding: 8px 0;">พานพุ่ม (600 บ.)</td>
-                            <td style="padding: 8px 0; text-align: right;">${(booking.flower_count || 0)} พาน</td>
-                            <td style="padding: 8px 0; text-align: right; font-weight: 500;">${flowerPrice.toLocaleString()}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #f3f4f6;">
-                            <td style="padding: 8px 0;">โต๊ะจีน (3,000 บ.)</td>
-                            <td style="padding: 8px 0; text-align: right;">${(booking.table_count || 0)} โต๊ะ</td>
-                            <td style="padding: 8px 0; text-align: right; font-weight: 500;">${tablePrice.toLocaleString()}</td>
-                        </tr>
+            <div style="display: flex; gap: 20px; align-items: flex-start; margin-top: 15px;">
+                <div style="flex: 1.2;">
+                    <h3 style="font-size: 15px; font-weight: bold; color: #374151; margin-bottom: 10px; border-left: 4px solid #10b981; padding-left: 10px;">🎁 รายการอื่นๆ</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        \${standardItemsHTML}
+                        \${booking.sponsor_amount > 0 ? \`
                         <tr>
-                            <td style="padding: 8px 0;">เงินสนับสนุน</td>
-                            <td style="padding: 8px 0; text-align: right;">-</td>
-                            <td style="padding: 8px 0; text-align: right; font-weight: 500; color: #16a34a;">+${sponsorPrice.toLocaleString()}</td>
-                        </tr>
+                            <td style="padding: 10px 0;">เงินสนับสนุนกิจกรรม</td>
+                            <td style="padding: 10px 0; text-align: center;">-</td>
+                            <td style="padding: 10px 0; text-align: right; font-weight: bold; color: #10b981;">+\${booking.sponsor_amount.toLocaleString()}</td>
+                        </tr>\` : ''}
                     </table>
                 </div>
 
-                <!-- Grand Total -->
-                <div style="width: 280px;">
-                    <h3 style="font-size: 16px; font-weight: bold; color: #b45309; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                        💰 ยอดรวมทั้งสิ้น
-                    </h3>
-                    <div style="background-color: #22c55e10; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; text-align: center;">
-                        <div style="font-size: 32px; font-weight: 900; color: #22c55e; line-height: 1;">
-                            ${totalPrice.toLocaleString()}
-                        </div>
-                        <div style="font-size: 14px; color: #15803d; margin-top: 5px;">บาทถ้วน</div>
-                    </div>
-                    ${booking.sponsor_amount > 0 ? `
-                    <div style="margin-top: 10px; text-align: center; font-size: 12px; color: #16a34a;">
-                        (รวมเงินสนับสนุน +${booking.sponsor_amount.toLocaleString()} บาทแล้ว)
-                    </div>
-                    ` : ''}
+                <div style="flex: 0.8; background-color: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; text-align: center;">
+                    <div style="font-size: 12px; font-weight: 800; color: #15803d; margin-bottom: 5px;">ยอดชำระสุทธิ</div>
+                    <div style="font-size: 32px; font-weight: 950; color: #166534;">\${grandTotal.toLocaleString()} <span style="font-size: 14px; font-weight: 600;">บาท</span></div>
                 </div>
             </div>
 
-            <!-- Footer (Absolute Bottom) -->
-            <div style="margin-top: auto; padding-top: 40px; text-align: right;">
-                <p style="font-size: 12px; color: #9ca3af; margin: 0;">วันที่พิมพ์: ${dateStr}</p>
-                <p style="font-size: 12px; color: #9ca3af; margin: 2px 0 0 0;">สำนักงานสหกรณ์จังหวัดระยอง</p>
+            <div style="margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8;">
+                <div>สำนักงานสหกรณ์จังหวัดระยอง | ID: #\${booking.id}</div>
+                <div style="text-align: right;">พิมพ์เมื่อ: \${dateStr}</div>
             </div>
+        </div>\`;
 
-        </div>
-    `;
-
-    // สร้าง container ชั่วคราว
     const container = document.createElement('div');
     container.innerHTML = pdfContent;
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.zIndex = '9999';
-    container.style.backgroundColor = 'white';
-    container.style.width = '794px';
-    container.style.boxSizing = 'border-box';
-
-    // Add loading indicator
-    const loadingMsg = document.createElement('div');
-    loadingMsg.innerHTML = '⏳ กำลังสร้างไฟล์ PDF...';
-    loadingMsg.style.position = 'fixed';
-    loadingMsg.style.top = '50%';
-    loadingMsg.style.left = '50%';
-    loadingMsg.style.transform = 'translate(-50%, -50%)';
-    loadingMsg.style.background = 'rgba(0,0,0,0.8)';
-    loadingMsg.style.color = 'white';
-    loadingMsg.style.padding = '20px 40px';
-    loadingMsg.style.borderRadius = '10px';
-    loadingMsg.style.zIndex = '10000';
-    loadingMsg.style.fontSize = '20px';
-    loadingMsg.style.fontFamily = "'Kanit', sans-serif";
-
+    container.style.position = 'fixed'; container.style.left = '-9999px'; container.style.top = '0';
     document.body.appendChild(container);
+
+    const loadingMsg = document.createElement('div');
+    loadingMsg.innerHTML = '⏳ กำลังประมวลผล PDF...';
+    loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:20px 40px;border-radius:10px;z-index:99999;';
     document.body.appendChild(loadingMsg);
 
-    // ตั้งค่า PDF
     const opt = {
-        margin: [0, 0, 0, 0],
-        filename: `สรุปการจอง_${booking.coop_name.replace(/\\s+/g, '_')}_${booking.id}.pdf`,
+        margin: [10, 10, 10, 10],
+        filename: \`เอกสารจอง_\${booking.coop_name.replace(/\\s+/g, '_')}_\${booking.id}.pdf\`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            letterRendering: true,
-            logging: false,
-            windowWidth: 794,
-            scrollX: 0,
-            scrollY: 0,
-            x: 0,
-            y: 0
-        },
-        jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
-        },
-        pagebreak: { mode: 'avoid-all' }
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // รอ font โหลดเสร็จ
-    document.fonts.ready.then(() => {
-        return new Promise(resolve => setTimeout(resolve, 500));
-    }).then(() => {
-        // หา element เนื้อหาภายใน container
-        const element = container.firstElementChild;
-        return html2pdf().set(opt).from(element).save();
-    }).then(() => {
-        document.body.removeChild(container);
-        document.body.removeChild(loadingMsg);
-        showToast('สร้าง PDF สำเร็จ!', 'success');
-    }).catch(err => {
-        console.error('PDF Error:', err);
-        showToast('เกิดข้อผิดพลาดในการสร้าง PDF', 'error');
-        if (document.body.contains(container)) document.body.removeChild(container);
-        if (document.body.contains(loadingMsg)) document.body.removeChild(loadingMsg);
-    });
+    setTimeout(() => {
+        html2pdf().set(opt).from(container.firstElementChild).save()
+            .then(() => { document.body.removeChild(container); document.body.removeChild(loadingMsg); showToast('ออกรายงานสำเร็จ!', 'success'); })
+            .catch(err => { console.error(err); document.body.removeChild(container); document.body.removeChild(loadingMsg); showToast('ผิดพลาด', 'error'); });
+    }, 500);
 }
 
-function generateShirtRowPDF(size, count) {
+function generateItemRowPDF(option, count, unitPrice) {
     if (!count || count === 0) {
-        return `
-        <tr style="color: #d1d5db;">
-            <td style="padding: 8px; border: 1px solid #f3f4f6;">${size}</td>
-            <td style="padding: 8px; text-align: center; border: 1px solid #f3f4f6;">-</td>
-            <td style="padding: 8px; text-align: right; border: 1px solid #f3f4f6;">-</td>
-        </tr>
-        `;
+        return \`
+            <tr style="color: #cbd5e1;">
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">\${option}</td>
+                <td style="padding: 10px; text-align: center; border-bottom: 1px solid #f1f5f9;">-</td>
+                <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f1f5f9;">-</td>
+            </tr>\`;
     }
-    return `
-    <tr>
-        <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: 500;">${size}</td>
-        <td style="padding: 8px; text-align: center; border: 1px solid #e5e7eb;">${count}</td>
-        <td style="padding: 8px; text-align: right; border: 1px solid #e5e7eb;">${(count * 300).toLocaleString()}</td>
-    </tr>
-    `;
+    return \`
+        <tr style="color: #334155;">
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: 600;">\${option}</td>
+            <td style="padding: 10px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 800;">\${count}</td>
+            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f1f5f9; font-weight: 800;">\${(count * unitPrice).toLocaleString()}</td>
+        </tr>\`;
 }
 
 /**
- * Generate PDF Summary for Shirt Orders - For Factory Production
- * @param {string} filterType - 'all', 'paid', or 'pending'
+ * Generate PDF Summary for All Activities - Admin Master Copy
  */
-function generateShirtSummaryPDF(filterType = 'all') {
-    // Filter bookings based on type
-    let filteredBookings = allBookings;
-    let filterLabel = '📊 ทั้งหมด';
-    let filterLabelColor = '#4f46e5'; // indigo
+function generateDetailedSummaryPDF(filterType = 'all') {
+    let filtered = allBookings;
+    let label = '📊 รายงานสรุปยอดทั้งหมด';
+    let color = '#4f46e5';
 
     if (filterType === 'paid') {
-        filteredBookings = allBookings.filter(b => b.payment_status === 'ชำระแล้ว');
-        filterLabel = '✅ ชำระแล้ว';
-        filterLabelColor = '#16a34a'; // green
+        filtered = allBookings.filter(b => b.payment_status === 'ชำระแล้ว');
+        label = '✅ รายงานสรุปที่ชำระแล้ว';
+        color = '#16a34a';
     } else if (filterType === 'pending') {
-        filteredBookings = allBookings.filter(b => b.payment_status !== 'ชำระแล้ว');
-        filterLabel = '⏳ รอชำระ';
-        filterLabelColor = '#d97706'; // yellow/amber
+        filtered = allBookings.filter(b => b.payment_status !== 'ชำระแล้ว');
+        label = '⏳ รายงานสรุปที่รอชำระ';
+        color = '#d97706';
     }
 
-    // Apply Date Range Filter
-    const startDateInput = document.getElementById('summaryStartDate');
-    const endDateInput = document.getElementById('summaryEndDate');
-
-    let dateRangeText = "";
-
-    if ((startDateInput && startDateInput.value) || (endDateInput && endDateInput.value)) {
-        let startDate = null;
-        let endDate = null;
-        const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-
-        if (startDateInput && startDateInput.value) {
-            const parts = startDateInput.value.split('-');
-            startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
-
-            const d = startDate.getDate();
-            const m = thaiMonths[startDate.getMonth()];
-            const y = startDate.getFullYear() + 543;
-            dateRangeText += `จาก ${d} ${m} ${y} `;
-        }
-
-        if (endDateInput && endDateInput.value) {
-            const parts = endDateInput.value.split('-');
-            endDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
-
-            const d = endDate.getDate();
-            const m = thaiMonths[endDate.getMonth()];
-            const y = endDate.getFullYear() + 543;
-            dateRangeText += `ถึง ${d} ${m} ${y}`;
-        }
-
-        filteredBookings = filteredBookings.filter(b => {
-            const bDate = parseBookingDate(b.id);
-            if (!bDate) return false;
-
-            if (startDate && bDate < startDate) return false;
-            if (endDate && bDate > endDate) return false;
-
-            return true;
-        });
-
-        if (dateRangeText) {
-            filterLabel += ` (${dateRangeText.trim()})`;
-        }
-    }
-
-    // Calculate sizes by color
-    const colors = [
-        { key: 'green', emoji: '🟢', name: 'สีเขียว', bgColor: '#dcfce7', borderColor: '#22c55e', textColor: '#166534' },
-        { key: 'blue', emoji: '🔵', name: 'สีฟ้า', bgColor: '#dbeafe', borderColor: '#3b82f6', textColor: '#1e40af' },
-        { key: 'purple', emoji: '🟣', name: 'สีม่วง', bgColor: '#f3e8ff', borderColor: '#a855f7', textColor: '#6b21a8' },
-        { key: 'pink', emoji: '💗', name: 'สีชมพู', bgColor: '#fce7f3', borderColor: '#ec4899', textColor: '#9d174d' }
-    ];
-
-    const sizeKeys = ['ss', 's', 'm', 'l', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl', 'special'];
-    const sizeLabels = ['SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL', 'พิเศษ'];
-
-    // Initialize data structure
-    const sizesByColor = {};
-    colors.forEach(c => {
-        sizesByColor[c.key] = { ss: 0, s: 0, m: 0, l: 0, xl: 0, '2xl': 0, '3xl': 0, '4xl': 0, '5xl': 0, '6xl': 0, '7xl': 0, special: 0, total: 0 };
-    });
-
-    // Calculate totals
-    let grandTotal = 0;
-    filteredBookings.forEach(booking => {
-        const color = booking.coop_color;
-        if (sizesByColor[color]) {
-            sizeKeys.forEach(key => {
-                const propName = 'shirt_' + key;
-                const count = booking[propName] || 0;
-                sizesByColor[color][key] += count;
-                sizesByColor[color].total += count;
-                grandTotal += count;
+    const activitySummaries = {};
+    window.availableActivities.forEach(act => {
+        activitySummaries[act.id] = { 
+            name: act.name, type: act.type, price: act.price, 
+            totalQty: 0, totalRevenue: 0, options: {} 
+        };
+        act.options.forEach(opt => {
+            activitySummaries[act.id].options[opt] = { total: 0 };
+            window.availableColors.forEach(col => {
+                activitySummaries[act.id].options[opt][col.id] = 0;
             });
+        });
+    });
+
+    filtered.forEach(b => {
+        if (!b.items) return;
+        b.items.forEach(it => {
+            const summ = activitySummaries[it.activity_id];
+            if (!summ) return;
+            summ.totalQty += it.quantity;
+            summ.totalRevenue += (it.quantity * it.price);
+            if (it.option && summ.options[it.option]) {
+                summ.options[it.option][b.coop_color] = (summ.options[it.option][b.coop_color] || 0) + it.quantity;
+                summ.options[it.option].total += it.quantity;
+            }
+        });
+    });
+
+    const now = new Date();
+    const dateTimeStr = \`\${now.getDate()}/\${now.getMonth()+1}/\${now.getFullYear()+543} \${String(now.getHours()).padStart(2,'0')}:\${String(now.getMinutes()).padStart(2,'0')} น.\`;
+    let sectionsHTML = '';
+    
+    window.availableActivities.forEach(act => {
+        const summ = activitySummaries[act.id];
+        if (summ.totalQty === 0) return;
+
+        if (act.type === 'Sizeable') {
+            const colorHeaders = window.availableColors.map(c => \`
+                <th style="padding: 8px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 11px;">
+                    \${c.name}
+                </th>\`).join('');
+            
+            const rowsHTML = act.options.map(opt => {
+                const optData = summ.options[opt];
+                if (optData.total === 0) return '';
+                const colorCells = window.availableColors.map(c => \`
+                    <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">
+                        \${optData[c.id] || '-'}
+                    </td>\`).join('');
+                return \`
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: 700; background: #f8fafc;">\${opt}</td>
+                        \${colorCells}
+                        <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 900; background: #f1f5f9;">\${optData.total}</td>
+                    </tr>\`;
+            }).join('');
+
+            sectionsHTML += \`
+                <div style="margin-bottom: 30px; page-break-inside: avoid;">
+                    <div style="font-size: 15px; font-weight: bold; color: #1e293b; margin-bottom: 12px; border-left: 5px solid #6366f1; padding-left: 12px;">
+                        📦 สรุปยอด: \${act.name} (รวมทั้งหมด \${summ.totalQty} หน่วย)
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center;">
+                        <thead>
+                            <tr style="background: #f1f5f9;">
+                                <th style="padding: 10px; border: 1px solid #e2e8f0; text-align: left; width: 100px;">ตัวเลือก/ไซส์</th>
+                                \${colorHeaders}
+                                <th style="padding: 10px; border: 1px solid #e2e8f0; background: #1e293b; color: white; width: 70px;">รวม</th>
+                            </tr>
+                        </thead>
+                        <tbody>\${rowsHTML}</tbody>
+                    </table>
+                </div>\`;
+        } else {
+            sectionsHTML += \`
+                <div style="margin-bottom: 20px; page-break-inside: avoid; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 16px; font-weight: 800; color: #334155;">🎁 \${act.name}</div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 20px; font-weight: 950; color: #0f172a;">\${summ.totalQty} <span style="font-size: 12px; font-weight: 500; color: #64748b;">หน่วย</span></div>
+                        <div style="font-size: 12px; font-weight: 700; color: #10b981;">รวมเป็นเงิน \${summ.totalRevenue.toLocaleString()} บ.</div>
+                    </div>
+                </div>\`;
         }
     });
 
-    // Calculate overall totals per size
-    const overallTotals = {};
-    sizeKeys.forEach(key => {
-        overallTotals[key] = colors.reduce((sum, c) => sum + sizesByColor[c.key][key], 0);
-    });
-
-    // Current date
-    const now = new Date();
-    const dateStr = `${now.getDate()}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear() + 543}`;
-    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
-
-    // ========== NEW DESIGN: Simple, Clean, Single Page A4 PDF ==========
-
-    // Simple color summary cards - just show total per color
-    const colorSummaryHTML = colors.map(c => `
-        <div style="flex: 1; text-align: center; padding: 12px 8px; background: ${c.bgColor}; border-radius: 8px; border: 2px solid ${c.borderColor};">
-            <div style="font-size: 24px; margin-bottom: 4px;">${c.emoji}</div>
-            <div style="font-size: 11px; font-weight: 600; color: ${c.textColor}; margin-bottom: 6px;">${c.name}</div>
-            <div style="font-size: 28px; font-weight: 900; color: ${c.textColor}; line-height: 1;">${sizesByColor[c.key].total}</div>
-            <div style="font-size: 10px; color: ${c.textColor}; opacity: 0.8;">ตัว</div>
-        </div>
-    `).join('');
-
-    // Table rows - only show sizes with data
-    const tableRowsHTML = sizeKeys.map((key, idx) => {
-        const total = overallTotals[key];
-        if (total === 0) return '';
-        return `
-            <tr>
-                <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">${sizeLabels[idx]}</td>
-                <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #166534;">${sizesByColor.green[key] || '-'}</td>
-                <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #1e40af;">${sizesByColor.blue[key] || '-'}</td>
-                <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #6b21a8;">${sizesByColor.purple[key] || '-'}</td>
-                <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #9d174d;">${sizesByColor.pink[key] || '-'}</td>
-                <td style="padding: 6px 12px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 700; background: #f0fdf4; color: #166534;">${total}</td>
-            </tr>
-        `;
-    }).join('');
-
-    // Final PDF HTML - Full width A4 Layout
-    const pdfContent = `
-        <div style="font-family: 'Kanit', sans-serif; width: 700px; padding: 25px; background: #fff; color: #333; box-sizing: border-box;">
-            
-            <!-- HEADER -->
-            <div style="text-align: center; padding-bottom: 15px; border-bottom: 3px solid #22c55e; margin-bottom: 20px;">
-                <div style="font-size: 24px; font-weight: 700; color: #111; margin-bottom: 4px;">📦 สรุปยอดสั่งจองเสื้อ</div>
-                <div style="font-size: 13px; color: #666; margin-bottom: 10px;">งานวันสหกรณ์แห่งชาติ ประจำปี พ.ศ. 2569</div>
-                <span style="display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 600; color: white; background: ${filterLabelColor};">${filterLabel}</span>
+    const pdfContent = \`
+        <div style="font-family: 'Kanit', sans-serif; width: 730px; padding: 45px; background: white; color: #1e293b;">
+            <div style="text-align: center; border-bottom: 4px solid #22c55e; padding-bottom: 20px; margin-bottom: 30px;">
+                <h1 style="font-size: 26px; font-weight: 900; color: #111827; margin: 0;">\${label}</h1>
+                <p style="font-size: 14px; color: #64748b; margin-top: 10px;">\${window.activeEvent?.name || ''}</p>
+                <div style="font-size: 11px; color: #94a3b8; font-family: monospace;">พิมพ์เมื่อ: \${dateTimeStr}</div>
             </div>
-
-            <!-- COLOR SUMMARY CARDS -->
-            <div style="margin-bottom: 20px;">
-                <div style="font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; padding-left: 8px; border-left: 4px solid #22c55e;">ยอดรวมแยกตามสี</div>
-                <div style="display: flex; gap: 10px;">
-                    ${colorSummaryHTML}
-                </div>
+            \${sectionsHTML}
+            <div style="margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 11px; color: #94a3b8; text-align: right;">
+                สำนักงานสหกรณ์จังหวัดระยอง | จองออนไลน์ 24 ชม.
             </div>
+        </div>\`;
 
-            <!-- DATA TABLE -->
-            <div style="margin-bottom: 20px;">
-                <div style="font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; padding-left: 8px; border-left: 4px solid #3b82f6;">รายละเอียดตามไซส์</div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-                    <thead>
-                        <tr style="background: #f8fafc;">
-                            <th style="padding: 10px 12px; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; width: 60px;">ไซส์</th>
-                            <th style="padding: 10px 12px; text-align: center; font-weight: 700; background: #dcfce7; color: #166534; border-bottom: 2px solid #e2e8f0;">🟢 เขียว</th>
-                            <th style="padding: 10px 12px; text-align: center; font-weight: 700; background: #dbeafe; color: #1e40af; border-bottom: 2px solid #e2e8f0;">🔵 ฟ้า</th>
-                            <th style="padding: 10px 12px; text-align: center; font-weight: 700; background: #f3e8ff; color: #6b21a8; border-bottom: 2px solid #e2e8f0;">🟣 ม่วง</th>
-                            <th style="padding: 10px 12px; text-align: center; font-weight: 700; background: #fce7f3; color: #9d174d; border-bottom: 2px solid #e2e8f0;">💗 ชมพู</th>
-                            <th style="padding: 10px 12px; text-align: center; font-weight: 700; background: #1f2937; color: white; border-bottom: 2px solid #1f2937; width: 60px;">รวม</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRowsHTML}
-                    </tbody>
-                    <tfoot>
-                        <tr style="background: #1f2937; color: white; font-weight: 700;">
-                            <td style="padding: 10px 12px;">รวมทั้งหมด</td>
-                            <td style="padding: 10px 12px; text-align: center;">${sizesByColor.green.total}</td>
-                            <td style="padding: 10px 12px; text-align: center;">${sizesByColor.blue.total}</td>
-                            <td style="padding: 10px 12px; text-align: center;">${sizesByColor.purple.total}</td>
-                            <td style="padding: 10px 12px; text-align: center;">${sizesByColor.pink.total}</td>
-                            <td style="padding: 10px 12px; text-align: center; background: #166534; font-size: 16px;">${grandTotal}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <!-- GRAND TOTAL BOX -->
-            <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 5px;">ยอดสั่งจองเสื้อรวมทั้งสิ้น</div>
-                <div style="font-size: 48px; font-weight: 900; color: white; line-height: 1;">${grandTotal}</div>
-                <div style="font-size: 16px; color: rgba(255,255,255,0.9); margin-top: 5px;">ตัว</div>
-            </div>
-
-            <!-- FOOTER -->
-            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #9ca3af; padding-top: 10px; border-top: 1px solid #e5e7eb;">
-                <div>สำนักงานสหกรณ์จังหวัดระยอง | โทร: 038-694-113</div>
-                <div>พิมพ์เมื่อ: ${dateStr} เวลา ${timeStr}</div>
-            </div>
-        </div>
-    `;
-
-    // Create container for PDF generation
     const container = document.createElement('div');
     container.innerHTML = pdfContent;
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    container.style.backgroundColor = 'white';
+    container.style.position = 'fixed'; container.style.left = '-9999px'; container.style.top = '0';
     document.body.appendChild(container);
 
-    // Loading indicator
     const loadingMsg = document.createElement('div');
-    loadingMsg.innerHTML = '⏳ กำลังสร้าง PDF...';
-    loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:white;padding:20px 40px;border-radius:12px;z-index:10000;font-size:18px;font-family:Kanit,sans-serif;';
+    loadingMsg.innerHTML = '⏳ กำลังเตรียมรายงานสรุป...';
+    loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:25px 50px;border-radius:15px;z-index:99999;';
     document.body.appendChild(loadingMsg);
 
-    // Filename
-    const filterNames = { all: 'ทั้งหมด', paid: 'ชำระแล้ว', pending: 'รอชำระ' };
-    const filename = `สรุปยอดเสื้อ_${filterNames[filterType]}_${dateStr.replace(/\//g, '-')}.pdf`;
-
-    // PDF Options - Full width A4
     const opt = {
-        margin: [10, 8, 10, 8], // mm: top, left, bottom, right (minimal margins for full width)
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false
-        },
-        jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
-        }
+        margin: [10, 10, 10, 10],
+        filename: \`สรุปยอดรวม_กิจกรรม_\${now.getFullYear()}\${now.getMonth()+1}\${now.getDate()}.pdf\`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // Generate PDF
     setTimeout(() => {
         html2pdf().set(opt).from(container.firstElementChild).save()
             .then(() => {
                 document.body.removeChild(container);
                 document.body.removeChild(loadingMsg);
-                showToast('สร้าง PDF สำเร็จ!', 'success');
+                showToast('พิมพ์รายงานสรุปสำเร็จ!', 'success');
             })
             .catch(err => {
-                console.error('PDF Error:', err);
+                console.error(err);
                 document.body.removeChild(container);
                 document.body.removeChild(loadingMsg);
-                showToast('เกิดข้อผิดพลาด', 'error');
+                showToast('เกิดข้อผิดพลาดในการสร้างรายงาน', 'error');
             });
-    }, 300);
+    }, 500);
+}
+
+function renderSettings() {
+    if (!isAdmin) return;
+    document.getElementById('setEventName').value = appSettings.EVENT_NAME || '';
+    document.getElementById('setIsBookingOpen').checked = appSettings.IS_BOOKING_OPEN;
+}
+
+async function saveSettings(event) {
+    event.preventDefault();
+    if (!isAdmin) return;
+    const payload = {
+        EVENT_NAME: document.getElementById('setEventName').value,
+        IS_BOOKING_OPEN: document.getElementById('setIsBookingOpen').checked ? "true" : "false"
+    };
+    showLoading(true);
+    try {
+        const result = await ApiClient.updateSettings(payload);
+        if (result.isOk) {
+            showToast('บันทึกการตั้งค่าสำเร็จ!', 'success');
+            const settingsResult = await ApiClient.getSettings();
+            if (settingsResult.isOk) {
+                appSettings = settingsResult.settings;
+                applyConfig();
+            }
+        }
+    } catch (error) { 
+        showToast('เกิดข้อผิดพลาด', 'error'); 
+    } finally { 
+        showLoading(false); 
+    }
 }
 
 document.addEventListener('DOMContentLoaded', init);
