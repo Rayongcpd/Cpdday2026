@@ -79,14 +79,14 @@ function applyConfig() {
     document.getElementById('eventName').textContent = appSettings.EVENT_NAME || CONFIG.EVENT_NAME;
     
     // Update booking form visibility based on settings
-    const bookingForm = document.querySelector('#content-booking .bg-white > div:not(.hidden)');
-    const bookingClosedDiv = document.querySelector('#content-booking .text-center.py-8');
+    const bookingFormWrapper = document.getElementById('bookingFormWrapper');
+    const bookingClosedDiv = document.getElementById('bookingClosedMessage');
     
     if (appSettings.IS_BOOKING_OPEN || isAdmin) {
-        if (bookingForm) bookingForm.classList.remove('hidden');
+        if (bookingFormWrapper) bookingFormWrapper.classList.remove('hidden');
         if (bookingClosedDiv) bookingClosedDiv.classList.add('hidden');
     } else {
-        if (bookingForm) bookingForm.classList.add('hidden');
+        if (bookingFormWrapper) bookingFormWrapper.classList.add('hidden');
         if (bookingClosedDiv) bookingClosedDiv.classList.remove('hidden');
     }
 }
