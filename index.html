@@ -513,11 +513,73 @@
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ ตั้งค่าระบบ (Admin Only)</h2>
                     
                     <form id="settingsForm" onsubmit="saveAllSettings(event)" class="space-y-6">
-                        <!-- Event Info -->
+                        <!-- Event Management -->
                         <div class="space-y-4">
-                            <h3 class="text-lg font-semibold text-indigo-700 border-b pb-2">📅 ข้อมูลกิจกรรม</h3>
+                            <h3 class="text-lg font-semibold text-indigo-700 border-b pb-2">🗂️ จัดการ Event</h3>
+                            
+                            <!-- Current Active Event -->
+                            <div id="currentEventDisplay" class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-4">
+                                <!-- Rendered by JS -->
+                            </div>
+
+                            <!-- Event Switcher -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">เปลี่ยน Event ที่ใช้งาน</label>
+                                    <select id="eventSwitcher" onchange="switchActiveEvent(this.value)"
+                                        class="w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium">
+                                        <!-- Options populated by JS -->
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" onclick="showCreateEventForm()"
+                                        class="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-lg font-bold hover:from-emerald-600 hover:to-green-700 transition-all shadow-sm flex items-center justify-center gap-2">
+                                        🆕 สร้าง Event ใหม่ (ปีถัดไป)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Create New Event Form (Hidden by default) -->
+                            <div id="createEventForm" class="hidden bg-green-50 border-2 border-green-300 rounded-xl p-5 space-y-4">
+                                <h4 class="font-bold text-green-800 flex items-center gap-2">🆕 สร้าง Event ใหม่</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-600 mb-1">Event ID</label>
+                                        <input type="text" id="newEventId" placeholder="CPD2027" 
+                                            class="w-full px-3 py-2 border rounded-lg font-mono">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-600 mb-1">ชื่อ Event</label>
+                                        <input type="text" id="newEventName" placeholder="งานวันสหกรณ์แห่งชาติ 2570"
+                                            class="w-full px-3 py-2 border rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-600 mb-1">ปี (พ.ศ.)</label>
+                                        <input type="text" id="newEventYear" placeholder="2570"
+                                            class="w-full px-3 py-2 border rounded-lg">
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 bg-white p-3 rounded-lg border border-green-200">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="copyActivities" checked
+                                            class="w-4 h-4 text-green-600 rounded focus:ring-green-500">
+                                        <span class="text-sm font-medium text-gray-700">คัดลอกกิจกรรมจาก Event ปัจจุบัน</span>
+                                    </label>
+                                </div>
+                                <div class="flex gap-3">
+                                    <button type="button" onclick="document.getElementById('createEventForm').classList.add('hidden')"
+                                        class="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+                                    <button type="button" onclick="createNewEvent()"
+                                        class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-bold hover:bg-green-700 flex items-center justify-center gap-1">🆕 สร้าง Event</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Event Settings -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-indigo-700 border-b pb-2">📅 ตั้งค่า Event ปัจจุบัน</h3>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อกิจกรรม</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อกิจกรรม (แสดงบนหน้าเว็บ)</label>
                                 <input type="text" id="setEventName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
                             </div>
                             <div class="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">

@@ -45,6 +45,7 @@ async function init() {
             window.activeEvent = settingsResult.activeEvent;
             window.availableActivities = settingsResult.activities || [];
             window.availableColors = settingsResult.colors || [];
+            window.allEvents = settingsResult.allEvents || [];
         }
         
         const data = await ApiClient.getBookingData();
@@ -1478,8 +1479,164 @@ function renderSettings() {
     document.getElementById('setEventName').value = appSettings.EVENT_NAME || '';
     document.getElementById('setIsBookingOpen').checked = appSettings.IS_BOOKING_OPEN;
     
+    // Render event manager
+    renderEventManager();
+    
     // Render existing activities
     renderActivitiesEditor();
+}
+
+/**
+ * Render Event Manager UI (current event, switcher, etc.)
+ */
+function renderEventManager() {
+    const displayEl = document.getElementById('currentEventDisplay');
+    const switcherEl = document.getElementById('eventSwitcher');
+    
+    if (!displayEl || !switcherEl) return;
+    
+    const event = window.activeEvent;
+    const allEvents = window.allEvents || [];
+    
+    // Current Event Display
+    if (event) {
+        displayEl.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest">Event ที่ใช้งานอยู่</p>
+                    <p class="text-xl font-extrabold text-indigo-800 mt-1">${event.name}</p>
+                    <p class="text-sm text-indigo-600 font-mono mt-0.5">ID: ${event.id} | ปี: ${event.year} | สถานะ: ${event.status}</p>
+                </div>
+                <span class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">✅ Active</span>
+            </div>`;
+    } else {
+        displayEl.innerHTML = `<p class="text-center text-gray-400 py-2">ไม่พบ Event ที่ Active</p>`;
+    }
+    
+    // Event Switcher Dropdown
+    switcherEl.innerHTML = '';
+    if (allEvents.length === 0 && event) {
+        switcherEl.innerHTML = `<option value="${event.id}" selected>${event.name} (${event.id})</option>`;
+    } else {
+        allEvents.forEach(ev => {
+            const isActive = event && ev.id === event.id;
+            switcherEl.innerHTML += `<option value="${ev.id}" ${isActive ? 'selected' : ''}>${ev.name} (${ev.id}) ${isActive ? '✅' : ''}</option>`;
+        });
+    }
+}
+
+/**
+ * Show the create new event form
+ */
+function showCreateEventForm() {
+    document.getElementById('createEventForm').classList.remove('hidden');
+    
+    // Auto-fill with suggested values
+    const currentYear = new Date().getFullYear() + 543; // Buddhist Era
+    const nextYear = currentYear + 1;
+    document.getElementById('newEventId').value = 'CPD' + nextYear;
+    document.getElementById('newEventName').value = 'งานวันสหกรณ์แห่งชาติ ' + nextYear;
+    document.getElementById('newEventYear').value = nextYear;
+}
+
+/**
+ * Create a new event via backend
+ */
+async function createNewEvent() {
+    const id = document.getElementById('newEventId').value.trim().toUpperCase();
+    const name = document.getElementById('newEventName').value.trim();
+    const year = document.getElementById('newEventYear').value.trim();
+    const copyActs = document.getElementById('copyActivities').checked;
+    
+    if (!id || !name || !year) {
+        showToast('กรุณากรอก ID, ชื่อ และปี ให้ครบ', 'error');
+        return;
+    }
+    
+    // Check for duplicate ID
+    const allEvents = window.allEvents || [];
+    if (allEvents.some(ev => ev.id === id)) {
+        showToast(`Event ID "${id}" มีอยู่แล้ว กรุณาใช้ ID อื่น`, 'error');
+        return;
+    }
+    
+    showLoading(true);
+    try {
+        const result = await ApiClient.request('createEvent', {
+            id: id,
+            name: name,
+            year: year,
+            copyFromEventId: copyActs && window.activeEvent ? window.activeEvent.id : null
+        });
+        
+        if (result.isOk) {
+            showToast(`สร้าง Event "${name}" สำเร็จ! 🎉`, 'success');
+            document.getElementById('createEventForm').classList.add('hidden');
+            await reloadAfterEventChange();
+        } else {
+            showToast('เกิดข้อผิดพลาด: ' + result.error, 'error');
+        }
+    } catch (error) {
+        showToast('Connection error: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+/**
+ * Switch the active event
+ */
+async function switchActiveEvent(eventId) {
+    if (!eventId) return;
+    
+    const currentId = window.activeEvent ? window.activeEvent.id : '';
+    if (eventId === currentId) return;
+    
+    if (!confirm(`ต้องการเปลี่ยนไปใช้ Event "${eventId}" หรือไม่?\n\nข้อมูลจองจะแสดงตาม Event ที่เลือก`)) {
+        // Revert dropdown
+        document.getElementById('eventSwitcher').value = currentId;
+        return;
+    }
+    
+    showLoading(true);
+    try {
+        const result = await ApiClient.request('switchActiveEvent', { eventId: eventId });
+        if (result.isOk) {
+            showToast(`เปลี่ยนเป็น Event "${eventId}" สำเร็จ!`, 'success');
+            await reloadAfterEventChange();
+        } else {
+            showToast('เกิดข้อผิดพลาด: ' + result.error, 'error');
+            document.getElementById('eventSwitcher').value = currentId;
+        }
+    } catch (error) {
+        showToast('Connection error: ' + error.message, 'error');
+        document.getElementById('eventSwitcher').value = currentId;
+    } finally {
+        showLoading(false);
+    }
+}
+
+/**
+ * Reload all data after event changes
+ */
+async function reloadAfterEventChange() {
+    try {
+        const settingsResult = await ApiClient.getSettings();
+        if (settingsResult.isOk) {
+            appSettings = settingsResult.settings;
+            window.activeEvent = settingsResult.activeEvent;
+            window.availableActivities = settingsResult.activities || [];
+            window.availableColors = settingsResult.colors || [];
+            window.allEvents = settingsResult.allEvents || [];
+            applyConfig();
+            renderDynamicForm();
+            renderSettings();
+        }
+        const data = await ApiClient.getBookingData();
+        onDataLoaded(data);
+    } catch (e) {
+        console.error('reloadAfterEventChange error:', e);
+    }
 }
 
 /**
