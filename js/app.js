@@ -1477,30 +1477,225 @@ function renderSettings() {
     if (!isAdmin) return;
     document.getElementById('setEventName').value = appSettings.EVENT_NAME || '';
     document.getElementById('setIsBookingOpen').checked = appSettings.IS_BOOKING_OPEN;
+    
+    // Render existing activities
+    renderActivitiesEditor();
 }
 
-async function saveSettings(event) {
+/**
+ * Render the activities editor in the Settings tab
+ */
+function renderActivitiesEditor() {
+    const container = document.getElementById('activitiesContainer');
+    if (!container) return;
+    
+    const activities = window.availableActivities || [];
+    
+    if (activities.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                <p class="text-lg">📦 ยังไม่มีกิจกรรม</p>
+                <p class="text-sm mt-1">กดปุ่ม "เพิ่มกิจกรรมใหม่" เพื่อเริ่มต้น</p>
+            </div>`;
+        return;
+    }
+    
+    let html = '';
+    activities.forEach((act, index) => {
+        const typeOptions = `
+            <option value="Sizeable" ${act.type === 'Sizeable' ? 'selected' : ''}>Sizeable (มีไซส์/ตัวเลือก)</option>
+            <option value="Quantity" ${act.type === 'Quantity' ? 'selected' : ''}>Quantity (ระบุจำนวน)</option>
+        `;
+        
+        html += `
+        <div class="bg-gray-50 rounded-xl border-2 border-gray-200 p-5 relative group hover:border-indigo-300 transition-colors" data-activity-index="${index}">
+            <button type="button" onclick="removeActivity(${index})"
+                class="absolute top-3 right-3 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition-all text-sm font-bold opacity-60 group-hover:opacity-100"
+                title="ลบกิจกรรมนี้">✕</button>
+            
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">ID</label>
+                    <input type="text" value="${act.id}" 
+                        class="act-id w-full px-3 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                        placeholder="SHIRT" ${act._isNew ? '' : 'readonly'} ${act._isNew ? '' : 'title="ID ของกิจกรรมที่มีอยู่แล้วไม่สามารถเปลี่ยนได้"'}>
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">ชื่อกิจกรรม</label>
+                    <input type="text" value="${act.name}" 
+                        class="act-name w-full px-3 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500"
+                        placeholder="เช่น เสื้อกีฬา">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">ประเภท</label>
+                    <select class="act-type w-full px-3 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500">
+                        ${typeOptions}
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">ราคา (บาท)</label>
+                    <input type="number" value="${act.price}" min="0"
+                        class="act-price w-full px-3 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 font-bold"
+                        placeholder="300">
+                </div>
+            </div>
+            <div class="mt-3">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">ตัวเลือก (Options) — คั่นด้วย comma</label>
+                <input type="text" value="${(act.options || []).join(',')}" 
+                    class="act-options w-full px-3 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                    placeholder="SS,S,M,L,XL,2XL,3XL (Sizeable) หรือปล่อยว่างสำหรับ Quantity">
+            </div>
+            ${act._isNew ? '<p class="text-xs text-green-600 font-bold mt-2">🆕 กิจกรรมใหม่ — จะถูกบันทึกเมื่อกดปุ่มบันทึก</p>' : ''}
+        </div>`;
+    });
+    
+    container.innerHTML = html;
+}
+
+/**
+ * Add a new empty activity to the editor
+ */
+function addNewActivity() {
+    if (!window.availableActivities) window.availableActivities = [];
+    
+    // Generate a unique default ID
+    const existingIds = window.availableActivities.map(a => a.id);
+    let newId = 'NEW_ACT';
+    let suffix = 1;
+    while (existingIds.includes(newId)) {
+        newId = 'NEW_ACT' + suffix;
+        suffix++;
+    }
+    
+    window.availableActivities.push({
+        id: newId,
+        name: '',
+        type: 'Quantity',
+        price: 0,
+        options: [],
+        _isNew: true
+    });
+    
+    renderActivitiesEditor();
+    
+    // Scroll to the new activity
+    const container = document.getElementById('activitiesContainer');
+    const lastCard = container.lastElementChild;
+    if (lastCard) lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    showToast('เพิ่มกิจกรรมใหม่แล้ว กรอกข้อมูลแล้วกดบันทึก', 'success');
+}
+
+/**
+ * Remove an activity from the editor
+ */
+function removeActivity(index) {
+    const act = window.availableActivities[index];
+    if (!act) return;
+    
+    const name = act.name || act.id;
+    if (!confirm(`ต้องการลบกิจกรรม "${name}" หรือไม่?\n\n⚠️ การลบจะมีผลหลังจากกดปุ่ม "บันทึกการตั้งค่าทั้งหมด"`)) return;
+    
+    window.availableActivities.splice(index, 1);
+    renderActivitiesEditor();
+    showToast(`ลบกิจกรรม "${name}" แล้ว — อย่าลืมกดบันทึก!`, 'info');
+}
+
+/**
+ * Collect current activity data from the editor form
+ */
+function collectActivitiesFromForm() {
+    const cards = document.querySelectorAll('#activitiesContainer > div[data-activity-index]');
+    const activities = [];
+    
+    cards.forEach(card => {
+        const id = card.querySelector('.act-id')?.value.trim().toUpperCase() || '';
+        const name = card.querySelector('.act-name')?.value.trim() || '';
+        const type = card.querySelector('.act-type')?.value || 'Quantity';
+        const price = parseInt(card.querySelector('.act-price')?.value) || 0;
+        const optionsStr = card.querySelector('.act-options')?.value.trim() || '';
+        const options = optionsStr ? optionsStr.split(',').map(o => o.trim()).filter(o => o) : [];
+        
+        if (id && name) {
+            activities.push({ id, name, type, price, options });
+        }
+    });
+    
+    return activities;
+}
+
+/**
+ * Save all settings and activities to the backend
+ */
+async function saveAllSettings(event) {
     event.preventDefault();
     if (!isAdmin) return;
-    const payload = {
+    
+    // Collect activities from form
+    const activities = collectActivitiesFromForm();
+    
+    // Validate
+    const ids = activities.map(a => a.id);
+    const duplicateIds = ids.filter((id, i) => ids.indexOf(id) !== i);
+    if (duplicateIds.length > 0) {
+        showToast(`พบ ID ซ้ำ: ${duplicateIds.join(', ')} — กรุณาแก้ไขก่อนบันทึก`, 'error');
+        return;
+    }
+    
+    for (const act of activities) {
+        if (!act.id || !act.name) {
+            showToast('กรุณากรอก ID และชื่อกิจกรรมให้ครบทุกรายการ', 'error');
+            return;
+        }
+        if (act.type === 'Sizeable' && act.options.length === 0) {
+            showToast(`กิจกรรม "${act.name}" เป็นประเภท Sizeable แต่ไม่ได้ระบุ Options`, 'error');
+            return;
+        }
+    }
+    
+    const settingsPayload = {
         EVENT_NAME: document.getElementById('setEventName').value,
         IS_BOOKING_OPEN: document.getElementById('setIsBookingOpen').checked ? "true" : "false"
     };
+    
+    const btn = document.getElementById('saveSettingsBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner mx-auto border-white"></div>';
     showLoading(true);
+    
     try {
-        const result = await ApiClient.updateSettings(payload);
-        if (result.isOk) {
-            showToast('บันทึกการตั้งค่าสำเร็จ!', 'success');
+        // 1. Save basic settings
+        await ApiClient.updateSettings(settingsPayload);
+        
+        // 2. Save activities
+        const actResult = await ApiClient.request('updateActivities', {
+            eventId: window.activeEvent ? window.activeEvent.id : 'CPD2026',
+            activities: activities
+        });
+        
+        if (actResult.isOk) {
+            showToast('บันทึกการตั้งค่าและกิจกรรมสำเร็จ!', 'success');
+            
+            // Reload everything  
             const settingsResult = await ApiClient.getSettings();
             if (settingsResult.isOk) {
                 appSettings = settingsResult.settings;
+                window.activeEvent = settingsResult.activeEvent;
+                window.availableActivities = settingsResult.activities || [];
+                window.availableColors = settingsResult.colors || [];
                 applyConfig();
+                renderDynamicForm();
+                renderActivitiesEditor();
             }
+        } else {
+            showToast('เกิดข้อผิดพลาด: ' + (actResult.error || 'Unknown'), 'error');
         }
     } catch (error) { 
-        showToast('เกิดข้อผิดพลาด', 'error'); 
+        showToast('เกิดข้อผิดพลาด: ' + error.message, 'error'); 
     } finally { 
-        showLoading(false); 
+        showLoading(false);
+        btn.disabled = false;
+        btn.innerHTML = '💾 บันทึกการตั้งค่าทั้งหมด';
     }
 }
 
