@@ -97,5 +97,12 @@ const ApiClient = {
      */
     async updateSettings(settings) {
         return await this.request('updateSettings', settings);
+    },
+
+    /**
+     * Update active event status (Open/Closed)
+     */
+    async updateEventStatus(eventId, status) {
+        return await this.request('updateEventStatus', { eventId, status });
     }
 };

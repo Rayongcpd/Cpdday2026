@@ -83,7 +83,8 @@ function applyConfig() {
     const bookingFormWrapper = document.getElementById('bookingFormWrapper');
     const bookingClosedDiv = document.getElementById('bookingClosedMessage');
     
-    const isBookingOpen = appSettings.IS_BOOKING_OPEN === 'true' || appSettings.IS_BOOKING_OPEN === true;
+    // Check Status from the active event rather than global settings
+    const isBookingOpen = window.activeEvent && window.activeEvent.status === 'Open';
     
     if (isBookingOpen || isAdmin) {
         if (bookingFormWrapper) bookingFormWrapper.classList.remove('hidden');
@@ -385,7 +386,7 @@ function selectColor(color) {
 let isPhoneVerified = false;  // Track if phone has been verified
 
 async function previewBooking() {
-    if (!appSettings.IS_BOOKING_OPEN && !isAdmin) {
+    if ((!window.activeEvent || window.activeEvent.status !== 'Open') && !isAdmin) {
         showBookingClosedModal();
         return;
     }
@@ -1480,7 +1481,7 @@ function generateDetailedSummaryPDF(filterType = 'all') {
 function renderSettings() {
     if (!isAdmin) return;
     document.getElementById('setEventName').value = appSettings.EVENT_NAME || '';
-    document.getElementById('setIsBookingOpen').checked = (appSettings.IS_BOOKING_OPEN === 'true' || appSettings.IS_BOOKING_OPEN === true);
+    document.getElementById('setIsBookingOpen').checked = (window.activeEvent && window.activeEvent.status === 'Open');
     
     // Render event manager
     renderEventManager();
@@ -1818,18 +1819,24 @@ async function saveAllSettings(event) {
         IS_BOOKING_OPEN: document.getElementById('setIsBookingOpen').checked ? "true" : "false"
     };
     
+    const currentEventId = window.activeEvent ? window.activeEvent.id : 'CPD2026';
+    const newStatus = document.getElementById('setIsBookingOpen').checked ? 'Open' : 'Closed';
+    
     const btn = document.getElementById('saveSettingsBtn');
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner mx-auto border-white"></div>';
     showLoading(true);
     
     try {
-        // 1. Save basic settings
+        // 1. Save basic settings (for backward compatibility)
         await ApiClient.updateSettings(settingsPayload);
         
-        // 2. Save activities
+        // 2. Save Event Status (The actual toggle for dynamic events)
+        await ApiClient.updateEventStatus(currentEventId, newStatus);
+        
+        // 3. Save activities
         const actResult = await ApiClient.request('updateActivities', {
-            eventId: window.activeEvent ? window.activeEvent.id : 'CPD2026',
+            eventId: currentEventId,
             activities: activities
         });
         
