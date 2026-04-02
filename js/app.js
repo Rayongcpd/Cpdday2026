@@ -75,8 +75,8 @@ function onLoadError(error) {
 }
 
 function applyConfig() {
-    document.getElementById('systemTitle').textContent = CONFIG.SYSTEM_TITLE;
-    document.getElementById('eventName').textContent = appSettings.EVENT_NAME || CONFIG.EVENT_NAME;
+    document.getElementById('systemTitle').textContent = appSettings.EVENT_NAME || CONFIG.EVENT_NAME;
+    document.getElementById('eventName').textContent = CONFIG.SYSTEM_TITLE;
     
     // Update booking form visibility based on settings
     const bookingFormWrapper = document.getElementById('bookingFormWrapper');
