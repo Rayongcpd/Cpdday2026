@@ -83,7 +83,9 @@ function applyConfig() {
     const bookingFormWrapper = document.getElementById('bookingFormWrapper');
     const bookingClosedDiv = document.getElementById('bookingClosedMessage');
     
-    if (appSettings.IS_BOOKING_OPEN || isAdmin) {
+    const isBookingOpen = appSettings.IS_BOOKING_OPEN === 'true' || appSettings.IS_BOOKING_OPEN === true;
+    
+    if (isBookingOpen || isAdmin) {
         if (bookingFormWrapper) bookingFormWrapper.classList.remove('hidden');
         if (bookingClosedDiv) bookingClosedDiv.classList.add('hidden');
     } else {
@@ -1478,7 +1480,7 @@ function generateDetailedSummaryPDF(filterType = 'all') {
 function renderSettings() {
     if (!isAdmin) return;
     document.getElementById('setEventName').value = appSettings.EVENT_NAME || '';
-    document.getElementById('setIsBookingOpen').checked = appSettings.IS_BOOKING_OPEN;
+    document.getElementById('setIsBookingOpen').checked = (appSettings.IS_BOOKING_OPEN === 'true' || appSettings.IS_BOOKING_OPEN === true);
     
     // Render event manager
     renderEventManager();
